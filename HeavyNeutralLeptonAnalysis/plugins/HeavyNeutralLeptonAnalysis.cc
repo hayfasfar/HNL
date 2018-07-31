@@ -19,6 +19,7 @@
 
 // system include files
 #include <memory>
+#include <vector>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -30,7 +31,23 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 // for the plotting
-#include "HNL/HeavyNeutralLeptonAnalysis/interface/SmartSelectionMonitor.h"
+//#include "SmartSelectionMonitor.h"
+
+// root includes
+#include "TSystem.h"
+#include "TFile.h"
+#include "TTree.h"
+#include "TCanvas.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TProfile.h"
+#include "TProfile2D.h"
+#include "TEventList.h"
+#include "TROOT.h"
+#include "TNtuple.h"
+#include "TLorentzVector.h"
+#include <Math/VectorUtil.h>
+
 
 
 //Load here all the dataformat that we will need
@@ -66,22 +83,7 @@
 
 #include "EgammaAnalysis/ElectronTools/interface/ElectronEnergyCalibratorRun2.h"
 #include "EgammaAnalysis/ElectronTools/interface/PhotonEnergyCalibratorRun2.h"
-
-// root includes
-
-#include "TSystem.h"
-#include "TFile.h"
-#include "TTree.h"
-#include "TCanvas.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TProfile.h"
-#include "TProfile2D.h"
-#include "TEventList.h"
-#include "TROOT.h"
-#include "TNtuple.h"
-#include "TLorentzVector.h"
-#include <Math/VectorUtil.h>
+#include "HNL/HeavyNeutralLeptonAnalysis/interface/BigNtuple.h"
 
 using namespace std;
 
@@ -99,8 +101,11 @@ class HeavyNeutralLeptonAnalysis : public edm::one::EDAnalyzer<edm::one::SharedR
    public:
       explicit HeavyNeutralLeptonAnalysis(const edm::ParameterSet&);
       ~HeavyNeutralLeptonAnalysis();
+      
+      bool PrimaryVertex( const reco::VertexCollection &vtx);
+      //static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
-      static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+
 
 
    private:
@@ -108,6 +113,38 @@ class HeavyNeutralLeptonAnalysis : public edm::one::EDAnalyzer<edm::one::SharedR
       virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
       virtual void initialize(const edm::Event&); 
       virtual void endJob() override;
+
+
+
+ edm::Service<TFileService> fs;
+ 
+  TTree * tree_;
+ BigNtuple ntuple_;
+ const edm::EventID& id;
+
+
+//--------------Variables------------------------
+
+ // std::string outputFileName_;
+ // std::string TreeName_;
+  Int_t run   = -1;
+  Int_t lumi  = -1;
+  Int_t event = -1;
+  int evNum = 0;
+
+  // ----------  Files  ---------------------------
+
+ //  TFile *outputFile_;
+
+//--------------template-------------------------
+
+//std::vector<bool>  GoodPV;
+//
+//std::vector<int> NbGoodMuons;
+
+
+
+
 
       // ----------member data ---------------------------
       bool   isMC;
@@ -161,6 +198,7 @@ class HeavyNeutralLeptonAnalysis : public edm::one::EDAnalyzer<edm::one::SharedR
 // constructors and destructor
 //
 HeavyNeutralLeptonAnalysis::HeavyNeutralLeptonAnalysis(const edm::ParameterSet& iConfig):
+  ntuple_(),
   isMC(iConfig.getParameter<bool>("isMC")),
   vtxMiniAODToken_(mayConsume<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vtxSrc"))),
   rhoToken_(mayConsume<double>(iConfig.getParameter<edm::InputTag>("rho"))),
@@ -180,8 +218,10 @@ HeavyNeutralLeptonAnalysis::HeavyNeutralLeptonAnalysis(const edm::ParameterSet& 
   lheEventProductToken_(mayConsume<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lheEventProducts")))
 {
    //now do what ever initialization is needed
-   usesResource("TFileService");
-
+  usesResource("TFileService");
+  
+ // outputFileName_ = iConfig.getUntrackedParameter<std::string>("outputFileName");
+ // TreeName_    = iConfig.getUntrackedParameter<std::string>("TreeName"); 
 }
 
 
@@ -218,29 +258,74 @@ void HeavyNeutralLeptonAnalysis::initialize(const edm::Event& iEvent){
 
 //
 // member functions
-//
+
+bool HeavyNeutralLeptonAnalysis::PrimaryVertex( const reco::VertexCollection &vtx)
+{
+  int nbGoodPv = 0;
+  bool result = false;
+
+     for(reco::VertexCollection::const_iterator PV = vtx.begin(); PV!=vtx.end();++PV) 
+    {
+       if(!PV->isFake()) {
+         if(PV->ndof() > 4 && fabs(PV->position().z()) <= 24 && fabs(PV->position().rho()) <= 2 ) nbGoodPv++;
+       }
+    }
+ 
+  if( nbGoodPv>= 1) result = true;
+  return result;
+}
+
+
+
+
+
+
 
 // ------------ method called for each event  ------------
 void
-HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
-{
+HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
+
+
+
    using namespace edm;
-
+   
    initialize(iEvent);
+   
+   ntuple_.fill_evtinfo(id);
+    
+    
 
+   
+ //  GoodPV.clear();
    reco::VertexCollection vtx;
-   if(vtxHandle.isValid()){ vtx = *vtxHandle;}
+   if(vtxHandle.isValid()){ vtx = *vtxHandle;
+   bool GoodPv = PrimaryVertex(vtx);
+  // GoodPV.push_back(GoodPv);
+   }
+
+
 
    /*
    double rho = 0;
    if(rhoHandle.isValid()){ rho = *rhoHandle;}
    */
 
-   pat::MuonCollection muons;
-   if(muonsHandle.isValid()){ muons = *muonsHandle;}
 
-   pat::ElectronCollection electrons;
-   if(electronsHandle.isValid()){ electrons = *electronsHandle;}
+  // NbGoodMuons.clear();
+   int NbMuons = 0;
+   pat::MuonCollection muons;
+   if(muonsHandle.isValid()){ muons = *muonsHandle;
+
+   for (const pat::Muon mu : muons) {
+     if( mu.pt() < 0.0 ) continue;
+      if (!( fabs(mu.eta()) < 2.4 && mu.pt() > 5. )) continue;
+       ++NbMuons;
+  }
+    //  NbGoodMuons.push_back(NbMuons);
+      cout<<"nb of muons"<< NbMuons<<endl;
+}
+
+
 
    EcalRecHitCollection recHitCollectionEB;
    if(recHitCollectionEBHandle.isValid()){ recHitCollectionEB = *recHitCollectionEBHandle;}
@@ -254,6 +339,10 @@ HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::EventSe
    pat::PackedCandidateCollection pfCandidates;
    if (pfCandidatesHandle.isValid()) { pfCandidates = *pfCandidatesHandle; }
 
+   
+   pat::ElectronCollection electrons;
+   if(electronsHandle.isValid()){ electrons = *electronsHandle;}
+
    pat::JetCollection jets;
    if(jetsHandle.isValid()){ jets = *jetsHandle;}
 
@@ -261,7 +350,7 @@ HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::EventSe
    if(metsHandle.isValid()){ mets = *metsHandle;}
    pat::MET met = mets[0];
 
-  
+ //  tree_->Fill();
 }
 
 
@@ -269,23 +358,31 @@ HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::EventSe
 void 
 HeavyNeutralLeptonAnalysis::beginJob()
 {
+
+  tree_ = fs->make<TTree>("tree_", "tree_");
+  ntuple_.set_evtinfo(tree_);
+
+
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
 void 
 HeavyNeutralLeptonAnalysis::endJob() 
 {
+
+//outputFile_->cd();
+//tree_->Write();
+//outputFile_->Close(); 
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
-void
+/*void
 HeavyNeutralLeptonAnalysis::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
   desc.setUnknown();
   descriptions.addDefault(desc);
-}
-
+}*/
 //define this as a plug-in
 DEFINE_FWK_MODULE(HeavyNeutralLeptonAnalysis);
