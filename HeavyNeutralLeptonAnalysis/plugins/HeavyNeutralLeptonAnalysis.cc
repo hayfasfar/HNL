@@ -31,7 +31,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 // for the plotting
-//#include "SmartSelectionMonitor.h"
+#include "HNL/HeavyNeutralLeptonAnalysis/interface/SmartSelectionMonitor.h"
 
 // root includes
 #include "TSystem.h"
@@ -120,21 +120,13 @@ class HeavyNeutralLeptonAnalysis : public edm::one::EDAnalyzer<edm::one::SharedR
  
   TTree * tree_;
  BigNtuple ntuple_;
- const edm::EventID& id;
 
 
 //--------------Variables------------------------
 
- // std::string outputFileName_;
- // std::string TreeName_;
-  Int_t run   = -1;
-  Int_t lumi  = -1;
-  Int_t event = -1;
-  int evNum = 0;
 
   // ----------  Files  ---------------------------
 
- //  TFile *outputFile_;
 
 //--------------template-------------------------
 
@@ -220,8 +212,9 @@ HeavyNeutralLeptonAnalysis::HeavyNeutralLeptonAnalysis(const edm::ParameterSet& 
    //now do what ever initialization is needed
   usesResource("TFileService");
   
- // outputFileName_ = iConfig.getUntrackedParameter<std::string>("outputFileName");
- // TreeName_    = iConfig.getUntrackedParameter<std::string>("TreeName"); 
+  tree_ = fs->make<TTree>("tree_", "tree_");
+  ntuple_.set_evtinfo(tree_);
+  
 }
 
 
@@ -289,9 +282,9 @@ HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::EventSe
 
    using namespace edm;
    
-   initialize(iEvent);
+   //initialize(iEvent);
    
-   ntuple_.fill_evtinfo(id);
+   ntuple_.fill_evtinfo(iEvent.id());
     
     
 
@@ -350,7 +343,6 @@ HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::EventSe
    if(metsHandle.isValid()){ mets = *metsHandle;}
    pat::MET met = mets[0];
 
- //  tree_->Fill();
 }
 
 
@@ -359,8 +351,6 @@ void
 HeavyNeutralLeptonAnalysis::beginJob()
 {
 
-  tree_ = fs->make<TTree>("tree_", "tree_");
-  ntuple_.set_evtinfo(tree_);
 
 
 }
