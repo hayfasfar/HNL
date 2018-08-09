@@ -1,5 +1,5 @@
 # HNL
-Repository to analyzr Heavy Neutral Leptons in CMS
+Repository to analyzer Heavy Neutral Leptons in CMS
 
 Instructions:
 
