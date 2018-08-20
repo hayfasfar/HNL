@@ -16,11 +16,11 @@ public:
 
 	void set_evtinfo(TTree* tree);
 	void fill_evtinfo(const edm::EventID& id);
-
+	
 private:
 	unsigned int lumi_ = 0;
-  unsigned int run_ = 0;
-  unsigned long long evt_ = 0;
+	unsigned int run_ = 0;
+	unsigned long long evt_ = 0;
 };
 
 #endif
