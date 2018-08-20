@@ -432,8 +432,8 @@ HeavyNeutralLeptonAnalysis::HeavyNeutralLeptonAnalysis(const edm::ParameterSet& 
   //now do what ever initialization is needed
   usesResource("TFileService");
 
-  //tree_ = fs->make<TTree>("tree_", "tree");
-  //ntuple_.set_evtinfo(tree_);
+  tree_ = fs->make<TTree>("tree_", "tree");
+  ntuple_.set_evtinfo(tree_);
 
 }
 

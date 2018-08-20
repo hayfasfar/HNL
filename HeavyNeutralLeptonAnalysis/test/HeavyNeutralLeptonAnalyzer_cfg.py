@@ -14,7 +14,8 @@ process.load("TrackingTools.TransientTrack.TransientTrackBuilder_cfi")
 
 process.MessageLogger.cerr.FwkReport.reportEvery = 1
 
-import PhysicsTools.PythonAnalysis.LumiList as LumiList
+#import PhysicsTools.PythonAnalysis.LumiList as LumiList
+import FWCore.PythonUtilities.LumiList as LumiList
 LumiList.LumiList().getVLuminosityBlockRange()
 
 #from Configuration.AlCa.GlobalTag import GlobalTag
