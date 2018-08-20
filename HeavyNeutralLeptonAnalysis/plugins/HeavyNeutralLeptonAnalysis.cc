@@ -80,11 +80,13 @@
 
 #include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
-
+#include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
+#include "FWCore/Common/interface/TriggerNames.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
 #include "EgammaAnalysis/ElectronTools/interface/ElectronEnergyCalibratorRun2.h"
 #include "EgammaAnalysis/ElectronTools/interface/PhotonEnergyCalibratorRun2.h"
 #include "HNL/HeavyNeutralLeptonAnalysis/interface/BigNtuple.h"
-
 using namespace std;
 
 //
@@ -105,34 +107,49 @@ class HeavyNeutralLeptonAnalysis : public edm::one::EDAnalyzer<edm::one::SharedR
       bool PrimaryVertex( const reco::VertexCollection &vtx);
       //static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
-
-
-
    private:
       virtual void beginJob() override;
       virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
       virtual void initialize(const edm::Event&); 
       virtual void endJob() override;
+       
 
 
-
- edm::Service<TFileService> fs;
- 
-  TTree * tree_;
+ edm::Service<TFileService> fs; 
+ TTree * tree_;
  BigNtuple ntuple_;
-
+ TH1F * hist_ ; 
 
 //--------------Variables------------------------
+    reco::Vertex pv;
+    int nbmuons = -1;
+//-------------- Templates________________________
 
+std::vector<bool>  GoodPV;
+std::vector<int> NbGoodMuons;
+std::vector<bool> tightmuons;
+std::vector<bool> pfmuons;
+std::vector<bool> loosemuons;
+std::vector<float> muonsp;
+std::vector<float> muonspt;
+std::vector<float> muonspx;
+std::vector<float> muonspy;
+std::vector<float> muonspz;
+std::vector<float> muonseta;
+std::vector<float> muonstheta;
+std::vector<float> muonsphi;
+std::vector<float> muonsvx;
+std::vector<float> muonsvy;
+std::vector<float> muonsvz;
+std::vector<float> muonsdxy;
 
-  // ----------  Files  ---------------------------
-
-
-//--------------template-------------------------
-
-//std::vector<bool>  GoodPV;
-//
-//std::vector<int> NbGoodMuons;
+std::vector<float> muonsPtError;
+std::vector<float> muonsEtaError;
+std::vector<float> muonsThetaError;
+std::vector<float> muonsPhiError;
+std::vector<string>HLTnames;
+std::vector<bool>  HLTresult;
+std::vector<int> pu_info; 
 
 
 
@@ -157,6 +174,9 @@ class HeavyNeutralLeptonAnalysis : public edm::one::EDAnalyzer<edm::one::SharedR
       edm::EDGetTokenT            < GenEventInfoProduct > genEventInfoToken_;
       edm::EDGetTokenT < std::vector<PileupSummaryInfo> > PUInfoToken_;
       edm::EDGetTokenT                < LHEEventProduct > lheEventProductToken_;
+      edm::EDGetTokenT                <pat::PackedTriggerPrescales> triggerPrescales_;
+      edm::EDGetTokenT         < std::vector<pat::TriggerObjectStandAlone>> triggetObjects_; 
+      const std::vector<std::string> bDiscriminators_;
 
     protected:
       edm::Handle         < reco::VertexCollection > vtxHandle;
@@ -176,6 +196,8 @@ class HeavyNeutralLeptonAnalysis : public edm::one::EDAnalyzer<edm::one::SharedR
       edm::Handle            < GenEventInfoProduct > genEventInfoHandle;
       edm::Handle < std::vector<PileupSummaryInfo> > puInfoH;
       edm::Handle                < LHEEventProduct > lheEPHandle;
+      edm::Handle                < pat::PackedTriggerPrescales> PrescaleHandle;
+      edm::Handle              <std::vector< pat::TriggerObjectStandAlone>> triggerObjectsHandle;
 };
 
 //
@@ -207,13 +229,15 @@ HeavyNeutralLeptonAnalysis::HeavyNeutralLeptonAnalysis(const edm::ParameterSet& 
   genParticleToken_(mayConsume<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("genParticleSrc"))),
   genEventInfoToken_(mayConsume<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEventInfoProduct"))),
   PUInfoToken_(consumes<std::vector<PileupSummaryInfo>>(iConfig.getParameter<edm::InputTag>("PUInfo"))),
-  lheEventProductToken_(mayConsume<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lheEventProducts")))
-{
+  lheEventProductToken_(mayConsume<LHEEventProduct>(iConfig.getParameter<edm::InputTag>("lheEventProducts"))),
+  triggerPrescales_(mayConsume<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
+  triggetObjects_(consumes<std::vector<pat::TriggerObjectStandAlone>>(iConfig.getParameter<edm::InputTag>("objects"))),
+  bDiscriminators_(iConfig.getParameter<std::vector<std::string> >("bDiscriminators")) {
    //now do what ever initialization is needed
-  usesResource("TFileService");
+   usesResource("TFileService");
   
-  tree_ = fs->make<TTree>("tree_", "tree_");
-  ntuple_.set_evtinfo(tree_);
+   tree_ = fs->make<TTree>("tree", "tree");
+ 
   
 }
 
@@ -238,6 +262,8 @@ void HeavyNeutralLeptonAnalysis::initialize(const edm::Event& iEvent){
   iEvent.getByToken(pfMETAODToken_, metsHandle);
   iEvent.getByToken(triggerResultsToken_, triggerResultsHandle);
   iEvent.getByToken(metFilterResultsToken_, metFilterResultsHandle);
+  iEvent.getByToken(triggerPrescales_, PrescaleHandle);
+  iEvent.getByToken(triggetObjects_, triggerObjectsHandle);
 
   if (isMC){
     iEvent.getByToken(genParticleToken_, genHandle);
@@ -266,10 +292,10 @@ bool HeavyNeutralLeptonAnalysis::PrimaryVertex( const reco::VertexCollection &vt
  
   if( nbGoodPv>= 1) result = true;
   return result;
+
+
+
 }
-
-
-
 
 
 
@@ -282,43 +308,66 @@ HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::EventSe
 
    using namespace edm;
    
-   //initialize(iEvent);
+   initialize(iEvent);
    
    ntuple_.fill_evtinfo(iEvent.id());
-    
-    
-
-   
- //  GoodPV.clear();
    reco::VertexCollection vtx;
    if(vtxHandle.isValid()){ vtx = *vtxHandle;
+   pv = vtx.front();
    bool GoodPv = PrimaryVertex(vtx);
-  // GoodPV.push_back(GoodPv);
+   GoodPV.push_back(GoodPv);
    }
 
 
 
-   /*
-   double rho = 0;
-   if(rhoHandle.isValid()){ rho = *rhoHandle;}
-   */
+
+   
+//************************************* ElectronCollection Study***************************************
+
+   pat::ElectronCollection electrons;
+   if(electronsHandle.isValid()){ electrons = *electronsHandle;}
+
+//************************************* MuonCollection Study***************************************
 
 
-  // NbGoodMuons.clear();
-   int NbMuons = 0;
+
    pat::MuonCollection muons;
    if(muonsHandle.isValid()){ muons = *muonsHandle;
-
+ 
+   nbmuons=0;  
    for (const pat::Muon mu : muons) {
      if( mu.pt() < 0.0 ) continue;
-      if (!( fabs(mu.eta()) < 2.4 && mu.pt() > 5. )) continue;
-       ++NbMuons;
+      if (!( fabs(mu.eta()) < 2.4)) continue;
+      ++nbmuons;
+
+      tightmuons.push_back(mu.isTightMuon(pv)); 
+      pfmuons.push_back(mu.isPFMuon());   
+      loosemuons.push_back(mu.isLooseMuon());    
+      muonsp.push_back(mu.muonBestTrack()->p());
+      muonspt.push_back(mu.muonBestTrack()->pt());
+      muonspx.push_back(mu.muonBestTrack()->px());
+      muonspy.push_back(mu.muonBestTrack()->py());
+      muonspz.push_back(mu.muonBestTrack()->pz());
+      muonseta.push_back(mu.muonBestTrack()->eta());
+      muonsphi.push_back(mu.muonBestTrack()->phi());
+      muonstheta.push_back(mu.muonBestTrack()->theta());
+      muonsvx.push_back(mu.muonBestTrack()->vx());
+      muonsvy.push_back(mu.muonBestTrack()->vy());
+      muonsvz.push_back(mu.muonBestTrack()->vz());
+      muonsdxy.push_back(mu.muonBestTrack()->dxy(pv.position()));
+
+      muonsPtError.push_back(mu.muonBestTrack()->ptError());
+      muonsEtaError.push_back(mu.muonBestTrack()->etaError());
+      muonsThetaError.push_back(mu.muonBestTrack()->thetaError());
+      muonsPhiError.push_back(mu.muonBestTrack()->phiError());
   }
-    //  NbGoodMuons.push_back(NbMuons);
-      cout<<"nb of muons"<< NbMuons<<endl;
+  NbGoodMuons.push_back(nbmuons);
 }
 
+//************************************* TauCollection Study***************************************
 
+   pat::TauCollection taus;
+   if(tausHandle.isValid()){ taus = *tausHandle;}
 
    EcalRecHitCollection recHitCollectionEB;
    if(recHitCollectionEBHandle.isValid()){ recHitCollectionEB = *recHitCollectionEBHandle;}
@@ -326,23 +375,111 @@ HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::EventSe
    EcalRecHitCollection recHitCollectionEE;
    if(recHitCollectionEEHandle.isValid()){ recHitCollectionEE = *recHitCollectionEEHandle;}
 
-   pat::TauCollection taus;
-   if(tausHandle.isValid()){ taus = *tausHandle;}
 
    pat::PackedCandidateCollection pfCandidates;
    if (pfCandidatesHandle.isValid()) { pfCandidates = *pfCandidatesHandle; }
 
-   
-   pat::ElectronCollection electrons;
-   if(electronsHandle.isValid()){ electrons = *electronsHandle;}
+
+//*************************************JetCollection Study***************************************
 
    pat::JetCollection jets;
-   if(jetsHandle.isValid()){ jets = *jetsHandle;}
+   if(jetsHandle.isValid()){ jets = *jetsHandle;
+    for(const pat::Jet jet : jets ){
+
+        cout<<"Jets pt"<<jet.pt()<<endl;
+    for( const std::string &bDiscr : bDiscriminators_ )
+    cout<<"B discriminator: "<<jet.bDiscriminator(bDiscr)<<endl;  
+}
+    
+
+
+
+}
+
+//************************************* METCollection Study***************************************
 
    pat::METCollection mets;
    if(metsHandle.isValid()){ mets = *metsHandle;}
    pat::MET met = mets[0];
 
+
+
+//************************************* HLT Paths and Objects Study***************************************
+
+
+  edm::TriggerResults  HLTresults;
+  if(triggerResultsHandle.isValid()){HLTresults = *triggerResultsHandle; 
+
+   const edm::TriggerNames &names =  iEvent.triggerNames(HLTresults);
+           //cout<< "\n == TRIGGER PATHS= "<<endl;
+
+     for(unsigned int i = 0, n = HLTresults.size(); i<n ; ++i ) {
+           //cout<< "Trigger" << names.triggerName(i) <<", prescale  = " <<PrescaleHandle->getPrescaleForIndex(i) << ":" << (HLTresults.accept(i) ? "PASS" : "fail (or not run)")<<endl;
+
+           //add the name of the trigger and check the trigger result->accept(i) variable.
+           //cout<<"trigger name : "<<names.triggerName(i)<<endl;  
+          // cout<<"Trigger result is : "<< HLTresults.accept(i)<<endl; 
+          // if(HLTresults.accept(i)==1) cout<<"trigger name : "<<names.triggerName(i)<<endl;
+        HLTnames.push_back(names.triggerName(i));
+        HLTresult.push_back(HLTresults.accept(i));
+    }
+
+
+
+
+ std::vector<pat::TriggerObjectStandAlone>  HLTObject;
+
+    if(triggerObjectsHandle.isValid()){ 
+
+        HLTObject = *triggerObjectsHandle;
+ 
+    for(unsigned i =0 , n= HLTObject.size() ; i< n ; ++i){
+ 
+      pat::TriggerObjectStandAlone src = HLTObject.at(i);
+
+   }
+
+
+    for (pat::TriggerObjectStandAlone obj : HLTObject) {
+       obj.unpackPathNames(names);
+      // std::cout << "\tTrigger object:  pt " << obj.pt() << ", eta " << obj.eta() << ", phi " << obj.phi() << std::endl;
+
+                // Print trigger object collection and type
+             
+        //         std::cout << "\t   Collection: " << obj.collection() << std::endl;
+        //         std::cout << "\t   Type IDs:   ";
+       //              for (unsigned h = 0; h < obj.filterIds().size(); ++h) std::cout << " " << obj.filterIds( )[h] ;
+       //          std::cout << std::endl;
+
+         }
+
+  
+} 
+
+}
+
+
+//************************************* Pile Up Collection info***************************************
+
+std::vector<PileupSummaryInfo> puInfo ; 
+
+if(puInfoH.isValid()){
+
+for(vector<PileupSummaryInfo> ::const_iterator pu = puInfoH->begin(); pu != puInfoH->end() ; ++pu ) {
+//cout<< "Number of interactions is : "<< pu->getPU_NumInteractions()<<endl;
+pu_info.push_back(pu->getPU_NumInteractions());
+
+}
+
+
+}
+
+   /*
+   double rho = 0;
+   if(rhoHandle.isValid()){ rho = *rhoHandle;}
+   */
+
+     tree_->Fill();      
 }
 
 
@@ -351,7 +488,38 @@ void
 HeavyNeutralLeptonAnalysis::beginJob()
 {
 
+ntuple_.set_evtinfo(tree_);
+tree_->Branch("NbGoodMuons",&NbGoodMuons);
+tree_->Branch("GoodPV",&GoodPV);
+tree_->Branch("tightmuons",&tightmuons);
+tree_->Branch("pfmuons",&pfmuons);
+tree_->Branch("loosemuons",&loosemuons);
+tree_->Branch("muonsp",&muonsp);
+tree_->Branch("muonspt",&muonspt);
+tree_->Branch("muonspx",&muonspx);
+tree_->Branch("muonspy",&muonspy);
+tree_->Branch("muonspz",&muonspz);
+tree_->Branch("muonseta",&muonseta);
+tree_->Branch("muonsphi",&muonsphi);
+tree_->Branch("muonstheta",&muonstheta);
+tree_->Branch("muonsvx",&muonsvx);
+tree_->Branch("muonsvy",&muonsvy);
+tree_->Branch("muonsvz",&muonsvz);
+tree_->Branch("muonsdxy",&muonsdxy);
 
+//tree_->Branch("muonsPresol",&muonsPresol);
+tree_->Branch("muonsPtError",&muonsPtError);
+tree_->Branch("muonsThetaError",&muonsThetaError);
+tree_->Branch("muonsEtaError",&muonsEtaError);
+tree_->Branch("muonsPhiError",&muonsPhiError);
+
+tree_->Branch("muons",&muonsPhiError);
+tree_->Branch("muonsPhiError",&muonsPhiError);
+tree_->Branch("muonsPhiError",&muonsPhiError);
+
+tree_->Branch("HLTnames",&HLTnames);
+tree_->Branch("HLTresult",&HLTresult);
+tree_->Branch("pu_info", &pu_info);
 
 }
 
@@ -359,7 +527,6 @@ HeavyNeutralLeptonAnalysis::beginJob()
 void 
 HeavyNeutralLeptonAnalysis::endJob() 
 {
-
 //outputFile_->cd();
 //tree_->Write();
 //outputFile_->Close(); 
