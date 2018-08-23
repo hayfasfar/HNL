@@ -107,7 +107,7 @@ public:
   explicit HeavyNeutralLeptonAnalysis(const edm::ParameterSet&);
   ~HeavyNeutralLeptonAnalysis();
   
-  bool PrimaryVertex( const reco::VertexCollection &vtx);
+  vector<reco::VertexCollection> PrimaryVertex( const reco::VertexCollection &vtx);
   bool isAncestor(const reco::Candidate* ancestor, const reco::Candidate* particle);
   double MatchGenFirstMuon(const edm::Event&,  reco::TrackRef BestTrack);
   double MatchGenSecondMuon(const edm::Event&,  reco::TrackRef BestTrack);
@@ -134,22 +134,7 @@ private:
 
   //--------------Variables------------------------
   //======================= Primary Vertex Information ========================//                     
-  std::vector<float> pvX;
-  std::vector<float> pvY;
-  std::vector<float> pvZ;
-  std::vector<float> pvXErr;
-  std::vector<float> pvYErr;
-  std::vector<float> pvZErr;
-  std::vector<float> pvMass;
-  std::vector<float> pvLxy;
-  std::vector<float> pvLxyz;
-  std::vector<float> pvLxySig;
-  std::vector<float> pvLxyzSig;
-  std::vector<float> pvChi2;
-  std::vector<int> pvNTrack;
-  std::vector<float> pvSumPtSq;
-  std::vector<float> NumberPV;
-
+ 
   //============= Trigger Information ===========================//  
   static const Int_t MAX_TRIGGERS      = 200;
   Int_t  nTrig;
@@ -183,161 +168,11 @@ private:
   
   //============= Secondary Vertex Information ===========================//
 
-  std::vector<int>   vertex_TrackSize;
-  std::vector<float> vertex_LXYSig;
-  std::vector<float> vertex_LXYZSig;
-  std::vector<float> vertex_LXY;
-  std::vector<float> vertex_LXYZ;
-  std::vector<float> vertex_mass;
-  std::vector<int>   vertex_charge;
-  std::vector<float> vertex_eta;
-  std::vector<float> vertex_phi;
-  std::vector<float> vertex_pt;
-  std::vector<float> vertex_p;
-  std::vector<float> vertex_Beta;
-  std::vector<float> vertex_Gamma;
-  std::vector<float> vertex_CTau0;
-  std::vector<float> vertex_NDof;
-  std::vector<float> vertex_Chi2;
-  std::vector<float> vertex_Angle3D;
-  std::vector<float> vertex_Angle2D;
-  std::vector<float> SVMatch;
-  std::vector<float> VertexMatch;
-
-  std::vector<int>   vertex_tracks_charge;
-  std::vector<float> vertex_tracks_eta;
-  std::vector<float> vertex_tracks_phi;
-  std::vector<float> vertex_tracks_pt;
-  std::vector<float> vertex_tracks_dxySig;
-  std::vector<float> vertex_tracks_dxy;
-  std::vector<float> vertex_tracks_dxyz;
-
-  std::vector<int>   vertex_tracks_Sumcharge;
-  std::vector<float> vertex_tracks_Sumpt;
-
   //============= Muon Information ===========================//  
-
-  std::vector<int>   Muon_nbMuon;
-  std::vector<float> Muon_en;
-  std::vector<float> Muon_pt;
-  std::vector<float> Muon_eta;
-  std::vector<float> Muon_phi;
-  std::vector<float> Muon_et;
-  std::vector<float> Muon_charge;
-  std::vector<float> Muon_trackiso;
-  std::vector<float> Muon_pfSumChargedHadronPt;
-  std::vector<float> Muon_pfSumNeutralHadronEt;
-  std::vector<float> Muon_PFSumPhotonEt;
-  std::vector<float> Muon_pfSumPUPt;
-  std::vector<int>   Muon_numberOfValidMuonHits;
-  std::vector<float> Muon_emIso;
-  std::vector<float> Muon_hadIso;
-  std::vector<float> Muon_normalizedChi2;
-  std::vector<int>   Muon_numberOfMatchedStations;
-  std::vector<int>   Muon_numberOfValidPixelHits;
-  std::vector<int>   Muon_numberOftrackerLayersWithMeasurement;
-  std::vector<int>   Muon_numberOfpixelLayersWithMeasurement;
-  std::vector<int>   Muon_TrackQuality;
-  std::vector<int>   Muon_InnerTrackQuality;
-  std::vector<float> Muon_pxTunePMuonBestTrack;
-  std::vector<float> Muon_pyTunePMuonBestTrack;
-  std::vector<float> Muon_pzTunePMuonBestTrack;
-  std::vector<float> Muon_pTunePMuonBestTrack;
-  std::vector<float> Muon_etaTunePMuonBestTrack;
-  std::vector<float> Muon_LXYZ;
-  std::vector<float> Muon_LXY;
-
-  std::vector<float> Muon_ptTunePMuonBestTrack;
-  std::vector<float> Muon_phiTunePMuonBestTrack;
-  std::vector<float> Muon_thetaTunePMuonBestTrack;
-  std::vector<float> Muon_chargeTunePMuonBestTrack;
-  std::vector<float> Muon_dPToverPTTunePMuonBestTrack;
-  std::vector<float> Muon_absdxyTunePMuonBestTrack;
-  std::vector<float> Muon_absdxyErrorTunePMuonBestTrack;
-  std::vector<float> Muon_absdxySigTunePMuonBestTrack;
-  std::vector<float> Muon_absdzTunePMuonBestTrack;
-  std::vector<float> Muon_absdzErrorTunePMuonBestTrack;
-  std::vector<float> Muon_absdzSigTunePMuonBestTrack;
-  std::vector<float> Muon_recoDeltaBeta;
-  std::vector<float> Muon_recoiso;
-  std::vector<float> Muon_isGlobalMuon;
-  std::vector<float> Muon_isStandAloneMuon;
-  std::vector<float> Muon_isPF;
-  std::vector<float> Muon_isRPCMuon;
-  std::vector<float> Muon_isTrackerMuon;
-  std::vector<float> Muon_isGoodMuon;
-  std::vector<float> Muon_isSoftMuon;
-  std::vector<float> Muon_isLoose;
-  std::vector<float> Muon_isTightMuon;
-
-  std::vector<int>    Muon_STAnHits;
-  std::vector<int>    Muon_STAnLost;
-  std::vector<int>    Muon_STAnStationsWithAnyHits;
-  std::vector<int>    Muon_STAnCscChambersWithAnyHits;
-  std::vector<int>    Muon_STAnDtChambersWithAnyHits;
-  std::vector<int>    Muon_STAnRpcChambersWithAnyHits;
-  std::vector<int>    Muon_STAinnermostStationWithAnyHits;
-  std::vector<int>    Muon_STAoutermostStationWithAnyHits;
-  std::vector<int>    Muon_STAnStationsWithValidHits;
-  std::vector<int>    Muon_STAnCscChambersWithValidHits;
-  std::vector<int>    Muon_STAnDtChambersWithValidHit;
-  std::vector<int>    Muon_STAnRpcChambersWithValidHits;
-  std::vector<int>    Muon_STAnValidMuonHits;
-  std::vector<int>    Muon_STAnValidCscHits;
-  std::vector<int>    Muon_STAnValidDtHits;
-  std::vector<int>    Muon_STAnValidRpcHits;
-  std::vector<int>    Muon_STAinnermostStationWithValidHits;
-  std::vector<int>    Muon_STAoutermostStationWithValidHits;
-
-  std::vector<float>  Muon_STATofDirection;
-  std::vector<float>  Muon_STATofNDof;
-  std::vector<float>  Muon_STATofTimeAtIpInOut;
-  std::vector<float>  Muon_STATofTimeAtIpInOutErr;
-  std::vector<float>  Muon_STATofTimeAtIpOutIn;
-  std::vector<float>  Muon_STATofTimeAtIpOutInErr;
-
-  std::vector<float>  Muon_SecondGenMatch;
-  std::vector<float>  Muon_FirstGenMatch;
 
   //============= JET Information ===========================// 
 
-  std::vector<int>     jet_nb;
-  std::vector<float>   jet_charge;
-  std::vector<float>   jet_et;
-  std::vector<float>   jet_pt;
-  std::vector<float>   jet_eta;
-  std::vector<float>   jet_phi;
-  std::vector<float>   jet_theta;
-  std::vector<float>   jet_en;
-  std::vector<float>   jet_chargedEmEnergy;
-  std::vector<float>   jet_neutralEmEnergyFraction;
-  std::vector<float>   jet_chargedHadronEnergy;
-  std::vector<float>   jet_neutralHadronEnergyFraction;
-  std::vector<float>   jet_chargedMuEnergy;
-  std::vector<float>   jet_chargedMuEnergyFraction;
-  std::vector<float>   jet_chargedMultiplicity;
-  std::vector<float>   jet_numberOfDaughters;
-  std::vector<float>   jet_muonEnergy;
-  std::vector<float>   jet_muonEnergyFraction;
-  std::vector<float>   jet_muonMultiplicity;
-  std::vector<float>   jet_neutralEmEnergy;
-  std::vector<float>   jet_neutralHadronEnergy;
-  std::vector<float>   jet_neutralHadronMultiplicity;
-  std::vector<float>   jet_neutralMultiplicity;
-
   //============= MET Information ===========================// 
-
-  std::vector<float>     PFMet_et;
-  std::vector<float>     PFMet_pt;
-  std::vector<float>     PFMet_phi;
-  std::vector<float>     PFMet_en;
-  std::vector<float>     PFMet_px;
-  std::vector<float>     PFMet_py;
-  std::vector<float>     PFMet_pz;
-  std::vector<float>     PFMet_sumEt;
-
-  std::vector<float>     CaloMet_pt;
-  std::vector<float>     CaloMet_phi;
 
   // ----------  Files  ---------------------------
   
@@ -473,20 +308,17 @@ void HeavyNeutralLeptonAnalysis::initialize(const edm::Event& iEvent){
 //
 // member functions
 
-bool HeavyNeutralLeptonAnalysis::PrimaryVertex( const reco::VertexCollection &vtx)
+std::vector<reco::VertexCollection> HeavyNeutralLeptonAnalysis::PrimaryVertex( const reco::VertexCollection &vtx)
 {
-  int nbGoodPv = 0;
-  bool result = false;
+  std::vector<reco::VertexCollection> allPVs;
 
-     for(reco::VertexCollection::const_iterator PV = vtx.begin(); PV!=vtx.end();++PV) 
+    for(reco::VertexCollection::const_iterator PV = vtx.begin(); PV!=vtx.end();++PV) 
     {
        if(!PV->isFake()) {
-         if(PV->ndof() > 4 && fabs(PV->position().z()) <= 24 && fabs(PV->position().rho()) <= 2 ) nbGoodPv++;
+         if(PV->ndof() > 4 && fabs(PV->position().z()) <= 24 && fabs(PV->position().rho()) <= 2 ) allPVs.push_back(*PV);
        }
-    }
- 
-  if( nbGoodPv>= 1) result = true;
-  return result;
+    } 
+  return  allPV;
 }
 
 //======================================================================================// 
@@ -580,83 +412,31 @@ double HeavyNeutralLeptonAnalysis::MatchGenVertex(const edm::Event& iEvent, reco
 
 
 // ------------ method called for each event  ------------
-void
-HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
-   using namespace edm;
-
-   initialize(iEvent);
-   
-   ntuple_.fill_evtinfo(iEvent.id());
-    
-   //============================================================= 
-   //
-   //            Method for Primary Vertex Tree
-   // 
-   //=============================================================   
-   //GoodPV.clear();
-   pvX.clear();
-   pvY.clear();
-   pvZ.clear();
-   pvXErr.clear();
-   pvYErr.clear();
-   pvZErr.clear();
-   pvMass.clear();
-   pvLxy.clear();
-   pvLxyz.clear();
-   pvLxySig.clear();
-   pvLxyzSig.clear();
-   pvChi2.clear();
-   pvNTrack.clear();
-   pvSumPtSq.clear();
-   NumberPV.clear();
+void HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
+  using namespace edm;
+  
+  initialize(iEvent);
+  
+  ntuple_.fill_evtInfo(iEvent.id());
+  
+  //============================================================= 
+  //
+  //             Primary Vertex
+  // 
+  //=============================================================   
    reco::VertexCollection vtx;
-   if(vtxHandle.isValid()){ vtx = *vtxHandle;
-   bool GoodPv = PrimaryVertex(vtx);
+  
+  if(vtxHandle.isValid()){
+    vtx = *vtxHandle;
+    std::vector<reco::VertexCollection> pvs = PrimaryVertex(vtx);
+    ntuple_.fill_evtInfo(pvs);
+  }
+  
+  else continue;
 
-   float nPV = 0;
-   reco::VertexCollection::const_iterator iterPV = vtx.begin();
-   for(; iterPV != vtx.end(); ++iterPV) {
-     if(!iterPV->isFake()) {
-
-       float x  = iterPV->x(), y = iterPV->y(), z = iterPV->z();
-       float xE = iterPV->xError(), yE = iterPV->yError(), zE = iterPV->zError();
-       nPV++;
-
-       pvX.push_back(x);
-       pvY.push_back(y);
-       pvZ.push_back(z);
-       pvXErr.push_back(xE);
-       pvYErr.push_back(yE);
-       pvZErr.push_back(zE);
-       pvMass.push_back(0);
-       pvLxy.push_back(std::sqrt( x * x + y * y ));
-       pvLxyz.push_back(std::sqrt( x * x + y * y + z * z));
-       pvLxySig.push_back(std::sqrt( x * x + y * y ) / std::sqrt(xE * xE + yE * yE));
-       pvLxyzSig.push_back(std::sqrt( x * x + y * y + z * z / std::sqrt(xE * xE + yE * yE + zE * zE)));
-       pvChi2.push_back(iterPV->chi2());
-       NumberPV.push_back(nPV);
-       
-       reco::Vertex::trackRef_iterator vtxIter = iterPV->tracks_begin();
-       float  SumPtSq =  0;
-       int NTrack = 0;
-       for(; vtxIter != iterPV->tracks_end(); ++vtxIter) {
-	 NTrack++;
-	 SumPtSq += (*vtxIter)->pt() * (*vtxIter)->pt();
-       }
-       pvNTrack.push_back(NTrack);
-       pvSumPtSq.push_back(SumPtSq);
-     }
-   }   
-   // GoodPV.push_back(GoodPv);
-   }
-   
-   /*
-   double rho = 0;
-   if(rhoHandle.isValid()){ rho = *rhoHandle;}
-   */
-   //=============================================================
+  //=============================================================
    //
-   //            Method for Trigger Tree 
+   //             Trigger 
    //    
    //=============================================================     
    const edm::TriggerResults triggerResults =  *triggerResultsHandle.product();
@@ -772,51 +552,19 @@ HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::EventSe
 
    //=============================================================
    //
-   //                Method for Secondary Vertex Tree 
+   //                Secondary Vertex
    //
    //============================================================= 
-   vertex_TrackSize.clear();                                                                                                                         
-   SVMatch.clear();                                                                                                                                  
-   vertex_LXY.clear();                                                                                                                               
-   vertex_LXYZ.clear();                                                                                                                              
-   vertex_LXYSig.clear();                 
-   vertex_LXYZSig.clear();
-   vertex_mass.clear();                                                                                                                              
-   vertex_eta.clear();                                                                                                                               
-   vertex_phi.clear();                                                                                                                               
-   vertex_pt.clear();                                                                                                                                
-   vertex_p.clear();                                                                                                                                 
-   vertex_Beta.clear();                                                                                                                              
-   vertex_Gamma.clear();                                                                                                                             
-   vertex_CTau0.clear();                                                                                                                             
-   vertex_NDof.clear();
-   vertex_Chi2.clear();
-   vertex_Angle3D.clear();
-   vertex_Angle2D.clear();
-   vertex_tracks_charge.clear();
-   vertex_tracks_eta.clear();
-   vertex_tracks_phi.clear();
-   vertex_tracks_pt.clear();
-   vertex_tracks_dxySig.clear();
-   vertex_tracks_dxy.clear();
-   vertex_tracks_dxyz.clear();
-   vertex_tracks_Sumcharge.clear();
-   vertex_tracks_Sumpt.clear();
-   VertexMatch.clear();
     
    reco::VertexCollection sv;
    if(SecondaryVertex.isValid() && muonsHandle.isValid()){ 
 
      sv = *SecondaryVertex;
 
-     std::vector<reco::Vertex> PV;
-     PV.insert(PV.end(), vtxHandle->begin(), vtxHandle->end());
-     const reco::Vertex selPV(*(PV.begin()));
-     
      std::vector<reco::Vertex> SV;
      SV.insert(SV.end(), sv.begin(), sv.end());
      
-     VertexAssociation JVAIVF("IVF", selPV, debug);
+     VertexAssociation JVAIVF("IVF", pvs.front(), debug);
 
      reco::VertexCollection::const_iterator vtxIter = SV.begin();
      for(; vtxIter != SV.end(); ++vtxIter ) {
@@ -827,184 +575,19 @@ HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::EventSe
      const reco::Vertex                      bestVertex      = bestVertexPair.first;
      const float                             bestVertexScore = bestVertexPair.second;
 
-     float  svChi2 = bestVertex.chi2();
-     float  svNDof = bestVertex.ndof();
-     
-     //flight distance from the firstPV                                                                                                              
-     float x  = bestVertex.x(), y = bestVertex.y(), z = bestVertex.z();
-     float dx = x - selPV.x() , dy = y - selPV.y(), dz = z - selPV.z();
+     _ntuple.fill_svInfo(bestVertex,bestVertexScore)
 
-     // set the compatibility score                                                                                                                  
-     float  selIVFIsPVScore = std::sqrt((dx/x)*(dx/x) + (dy/y)*(dy/y) + (dz/z)*(dz/z));
-     selIVFIsPV = selIVFIsPVScore < pvCompatibilityScore; // default 5% consitency check                                                             
 
-     //build the total error                                                                                                                         
-     float svxE = bestVertex.xError(), svyE = bestVertex.yError(), svzE = bestVertex.zError();
-     float pvxE = selPV.xError(), pvyE = selPV.yError(), pvzE = selPV.zError();
-     float xE   = std::sqrt(svxE * svxE + pvxE * pvxE), yE = std::sqrt(svyE * svyE + pvyE * pvyE), zE = std::sqrt(svzE * svzE + pvzE * pvzE);
-   
-     // mother beta, gamma, ctau                                                                                                                     
-     float   beta_mom  = bestVertex.p4().P() / bestVertex.p4().energy();
-     float   gamma_mom = bestVertex.p4().energy() / bestVertex.p4().mass();
-
-     TVector3 pvVector3D(selPV.x(), selPV.y(), selPV.z());
-     TVector3 pvVector2D(selPV.x(), selPV.y(), 0);
-     TVector3 svVector3D(x, y, z);
-     TVector3 svVector2D(x, y, 0);
-
-     // line pointing form the primary vertex through the sceondary vertex                                                                           
-     TVector3 svMom3D( bestVertex.p4().x(), bestVertex.p4().y(), bestVertex.p4().z());
-     TVector3 svMom2D( bestVertex.p4().x(), bestVertex.p4().y(), 0);
-
-     // you want the negative when the momentum and sv are in the same                                                                               
-     // direction relative to the PV                                                                                                                 
-     // this makes sure the angle is not pi when the vertex is fit behind                                                                            
-     // the primary vertex                                                                                                                           
-     float sign2D =  (svMom2D * (svVector2D - pvVector2D)) > 0 ? -1: 1;
-     float sign3D =  (svMom3D * (svVector3D - pvVector3D)) > 0 ? -1: 1;
-
-     TVector3 pvToVertex3D( sign3D * dx, sign3D * dy, sign3D * dz);
-     TVector3 pvToVertex2D( sign2D * dx, sign2D * dy, 0);
-
-     float  svAngle3D = pvToVertex3D.Angle(svMom3D);
-     float  svAngle2D = pvToVertex2D.Angle(svMom2D);
-
-     vertex_TrackSize.push_back(selIVFIsPV ? 0 : bestVertex.nTracks());
-     vertex_LXY.push_back(selIVFIsPV ? 0 : std::sqrt( dx * dx + dy * dy ));
-     vertex_LXYZ.push_back(selIVFIsPV ? 0 : std::sqrt( dx * dx + dy * dy + dz * dz ));
-     vertex_LXYSig.push_back(selIVFIsPV ? 0 : std::sqrt( dx * dx + dy * dy ) / std::sqrt(xE * xE + yE * yE));
-     vertex_LXYZSig.push_back(selIVFIsPV ? 0 :  std::sqrt( dx * dx + dy * dy + dz * dz) / std::sqrt(xE * xE + yE * yE + zE * zE));
-     vertex_mass.push_back(selIVFIsPV ? 0 : bestVertex.p4().mass());
-     vertex_eta.push_back(selIVFIsPV ? 0 : bestVertex.p4().eta());
-     vertex_phi.push_back(selIVFIsPV ? 0 : bestVertex.p4().phi());
-     vertex_pt.push_back(selIVFIsPV ? 0 : bestVertex.p4().pt());
-     vertex_p.push_back(selIVFIsPV ? 0 : bestVertex.p4().P());
-     vertex_Beta.push_back(selIVFIsPV ? 0 : beta_mom);
-     vertex_Gamma.push_back(selIVFIsPV ? 0 : gamma_mom);
-     vertex_CTau0.push_back(selIVFIsPV ? 0 : std::sqrt( dx * dx + dy * dy + dz * dz) / (beta_mom * gamma_mom));
-     vertex_NDof.push_back(selIVFIsPV ? 0 : svNDof);
-     vertex_Chi2.push_back(selIVFIsPV ? 0 : svChi2);
-     vertex_Angle3D.push_back(selIVFIsPV ? -3 : svAngle3D);
-     vertex_Angle2D.push_back(selIVFIsPV ? -3 : svAngle2D);
-
-     SVMatch.push_back(bestVertexScore);
-
-     double GenParticleIndex = -99.99;
-     if(isMC)  GenParticleIndex = MatchGenVertex(iEvent,  bestVertex);
-     VertexMatch.push_back(GenParticleIndex);
-
-     int ch = 0;
-     float pt = 0;
-
-     if(!selIVFIsPV && bestVertexScore > 0 ){
-
-       reco::Vertex::trackRef_iterator tt = bestVertex.tracks_begin();
-       for(; tt != bestVertex.tracks_end(); ++tt) {
-
-	 vertex_tracks_charge.push_back((*tt)->charge());
-	 vertex_tracks_eta.push_back((*tt)->eta());
-	 vertex_tracks_phi.push_back((*tt)->phi());
-	 vertex_tracks_pt.push_back((*tt)->pt());
-	 vertex_tracks_dxySig.push_back(fabs((*tt)->dxy(selPV.position()))/fabs((*tt)->dxyError()));
-	 vertex_tracks_dxy.push_back((*tt)->dxy(selPV.position()));
-
-	 ROOT::Math::SVector<double, 3> lxyz1((*tt)->vx()-selPV.position().x(), (*tt)->vy()-selPV.position().y(), (*tt)->vz()-selPV.position().z());
-	 float dxyz = (float)ROOT::Math::Mag(lxyz1); // magntude of the vector                                                                       
-	 vertex_tracks_dxyz.push_back(dxyz);
-	 ch+=(*tt)->charge();
-	 pt+=(*tt)->pt();
-       }
-       vertex_tracks_Sumcharge.push_back(ch);
-       vertex_tracks_Sumpt.push_back(pt);       
-     }     
-   }
+       //to add to fill_svInfo
+       // double GenParticleIndex = -99.99;
+       //if(isMC)  GenParticleIndex = MatchGenVertex(iEvent,  bestVertex);
+       //VertexMatch.push_back(GenParticleIndex);
 
    //=============================================================                                                                                   
    //                                                                                                                                                
    //                Method for Muon Tree                                           
    //                                                                                                                                                
    //=============================================================                                                                                   
-
-   Muon_nbMuon.clear();
-   Muon_en.clear();
-   Muon_pt.clear();
-   Muon_eta.clear();
-   Muon_phi.clear();
-   Muon_et.clear();
-   Muon_charge.clear();
-   Muon_trackiso.clear();
-   Muon_pfSumChargedHadronPt.clear();
-   Muon_pfSumNeutralHadronEt.clear();
-   Muon_PFSumPhotonEt.clear();
-   Muon_pfSumPUPt.clear();
-   Muon_numberOfValidMuonHits.clear();
-   Muon_emIso.clear();
-   Muon_hadIso.clear();
-   Muon_normalizedChi2.clear();
-   Muon_numberOfMatchedStations.clear();
-   Muon_numberOfValidPixelHits.clear();
-   Muon_numberOftrackerLayersWithMeasurement.clear();
-   Muon_numberOfpixelLayersWithMeasurement.clear();
-   Muon_TrackQuality.clear();
-   Muon_InnerTrackQuality.clear();
-   Muon_pxTunePMuonBestTrack.clear();
-   Muon_pyTunePMuonBestTrack.clear();
-   Muon_pzTunePMuonBestTrack.clear();
-   Muon_pTunePMuonBestTrack.clear();
-   Muon_etaTunePMuonBestTrack.clear();
-   Muon_LXYZ.clear();
-   Muon_LXY.clear();
-
-   Muon_ptTunePMuonBestTrack.clear();
-   Muon_phiTunePMuonBestTrack.clear();
-   Muon_thetaTunePMuonBestTrack.clear();
-   Muon_chargeTunePMuonBestTrack.clear();
-   Muon_dPToverPTTunePMuonBestTrack.clear();
-   Muon_absdxyTunePMuonBestTrack.clear();
-   Muon_absdxyErrorTunePMuonBestTrack.clear();
-   Muon_absdxySigTunePMuonBestTrack.clear();
-   Muon_absdzTunePMuonBestTrack.clear();
-   Muon_absdzErrorTunePMuonBestTrack.clear();
-   Muon_absdzSigTunePMuonBestTrack.clear();
-   Muon_recoDeltaBeta.clear();
-   Muon_recoiso.clear();
-   Muon_isGlobalMuon.clear();
-   Muon_isStandAloneMuon.clear();
-   Muon_isPF.clear();
-   Muon_isRPCMuon.clear();
-   Muon_isTrackerMuon.clear();
-   Muon_isGoodMuon.clear();
-   Muon_isSoftMuon.clear();
-   Muon_isLoose.clear();
-   Muon_isTightMuon.clear();
-
-   Muon_STAnHits.clear();
-   Muon_STAnLost.clear();
-   Muon_STAnStationsWithAnyHits.clear();
-   Muon_STAnCscChambersWithAnyHits.clear();
-   Muon_STAnDtChambersWithAnyHits.clear();
-   Muon_STAnRpcChambersWithAnyHits.clear();
-   Muon_STAinnermostStationWithAnyHits.clear();
-   Muon_STAoutermostStationWithAnyHits.clear();
-   Muon_STAnStationsWithValidHits.clear();
-   Muon_STAnCscChambersWithValidHits.clear();
-   Muon_STAnDtChambersWithValidHit.clear();
-   Muon_STAnRpcChambersWithValidHits.clear();
-   Muon_STAnValidMuonHits.clear();
-   Muon_STAnValidCscHits.clear();
-   Muon_STAnValidDtHits.clear();
-   Muon_STAnValidRpcHits.clear();
-   Muon_STAinnermostStationWithValidHits.clear();
-   Muon_STAoutermostStationWithValidHits.clear();
-   
-   Muon_STATofDirection.clear();
-   Muon_STATofNDof.clear();
-   Muon_STATofTimeAtIpInOut.clear();
-   Muon_STATofTimeAtIpInOutErr.clear();
-   Muon_STATofTimeAtIpOutIn.clear();
-   Muon_STATofTimeAtIpOutInErr.clear();
-
-   Muon_FirstGenMatch.clear();
    Muon_SecondGenMatch.clear();
   // NbGoodMuons.clear();
 
@@ -1157,103 +740,34 @@ HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::EventSe
 
    //============================================================= 
    //
-   //            Method for Jets Tree 
+   //             Jets 
    //       
    //=============================================================
 
-   jet_nb.clear();
-   jet_charge.clear();
-   jet_et.clear();
-   jet_pt.clear();
-   jet_eta.clear();
-   jet_phi.clear();
-   jet_theta.clear();
-   jet_en.clear();
-   jet_chargedEmEnergy.clear();
-   jet_neutralEmEnergyFraction.clear();
-   jet_chargedHadronEnergy.clear();
-   jet_neutralHadronEnergyFraction.clear();
-   jet_chargedMuEnergy.clear();
-   jet_chargedMuEnergyFraction.clear();
-   jet_chargedMultiplicity.clear();
-   jet_numberOfDaughters.clear();
-   jet_muonEnergy.clear();
-   jet_muonEnergyFraction.clear();
-   jet_muonMultiplicity.clear();
-   jet_neutralEmEnergy.clear();
-   jet_neutralHadronEnergy.clear();
-   jet_neutralHadronMultiplicity.clear();
-   jet_neutralMultiplicity.clear();
-
    int jetnumber=0;
    pat::JetCollection jets;
+
+   ntuples_.ill_jetInfo(jets);
    if(jetsHandle.isValid()){ jets = *jetsHandle;
-     for (const pat::Jet JET : jets) {
-       if( JET.pt() < 0.0 ) continue;
-       if (!( fabs(JET.eta()) < 3 && JET.pt() > 5. )) continue;
-       jetnumber++;
-       jet_nb.push_back(jetnumber);
-       jet_charge.push_back(JET.charge());
-       jet_et.push_back(JET.et());
-       jet_pt.push_back(JET.pt());
-       jet_eta.push_back(JET.eta());
-       jet_phi.push_back(JET.phi());
-       jet_theta.push_back(JET.theta());
-       jet_en.push_back(JET.energy());
-       jet_chargedEmEnergy.push_back(JET.chargedEmEnergy());
-       jet_neutralEmEnergyFraction.push_back(JET.neutralEmEnergyFraction());
-       jet_chargedHadronEnergy.push_back(JET.chargedHadronEnergy());
-       jet_neutralHadronEnergyFraction.push_back(JET.neutralHadronEnergyFraction());
-       jet_chargedMuEnergy.push_back(JET.chargedMuEnergy());
-       jet_chargedMuEnergyFraction.push_back(JET.chargedMuEnergyFraction());
-       jet_chargedMultiplicity.push_back(JET.chargedMultiplicity());
-       jet_numberOfDaughters.push_back(JET.numberOfDaughters());
-       jet_muonEnergy.push_back(JET.muonEnergy());
-       jet_muonEnergyFraction.push_back(JET.muonEnergyFraction());
-       jet_muonMultiplicity.push_back(JET.muonMultiplicity());
-       jet_neutralEmEnergy.push_back(JET.neutralEmEnergy());
-       jet_neutralHadronEnergy.push_back(JET.neutralHadronEnergy());
-       jet_neutralHadronMultiplicity.push_back(JET.neutralHadronMultiplicity());
-       jet_neutralMultiplicity.push_back(JET.neutralMultiplicity());
-     }
+     ntuples_.ill_jetInfo(jets);
    }
    //=============================================================
    //
-   //            Method for Missing Energy Tree
+   //            Missing Energy 
    //     
    //============================================================= 
-   PFMet_et.clear();
-   PFMet_pt.clear();
-   PFMet_phi.clear();
-   PFMet_en.clear();
-   PFMet_px.clear();
-   PFMet_py.clear();
-   PFMet_pz.clear();
-   PFMet_sumEt.clear();
-
-   CaloMet_pt.clear();
-   CaloMet_phi.clear();
    
    pat::METCollection mets;
    if(metsHandle.isValid()){ mets = *metsHandle;
      const pat::MET met = mets.front();
-     PFMet_et.push_back(met.et());     
-     PFMet_pt.push_back(met.pt());     
-     PFMet_phi.push_back(met.phi());    
-     PFMet_en.push_back(met.energy()); 
-     PFMet_px.push_back(met.px());     
-     PFMet_py.push_back(met.py());     
-     PFMet_pz.push_back(met.pz());     
-     PFMet_sumEt.push_back(met.sumEt());
-
-     CaloMet_pt.push_back(met.caloMETPt());     
-     CaloMet_phi.push_back(met.caloMETPhi());    
-
+     ntuple_.fill_metInfo(met);
+     
+   }
+   
+   }
+   
 }
-   //pat::MET met = mets[0];
-}
-
-
+   
 // ------------ method called once each job just before starting event loop  ------------
 void 
 HeavyNeutralLeptonAnalysis::beginJob()
