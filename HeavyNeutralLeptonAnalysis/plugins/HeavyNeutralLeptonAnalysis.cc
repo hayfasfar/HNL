@@ -486,7 +486,7 @@ void HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::Ev
    }
 
    // lambda function to sort this muons
-   std::sort(goodMuons.begin(), goodMuons.end(), [](pat::Muon a, pat::Muon b) {return a.pt() < b.pt(); });
+   std::sort(looseMuons.begin(), looseMuons.end(), [](pat::Muon a, pat::Muon b) {return a.pt() < b.pt(); });
    if(!goodMuons.size()) return;
    if(!looseMuons.size()) return;
    pat::Muon muonHNL = looseMuons[0];
@@ -521,7 +521,7 @@ void HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::Ev
        float dx = x - pvs.at(0).x() , dy = y - pvs.at(0).y(), dz = z - pvs.at(0).z();
        
        float  selIVFIsPVScore = std::sqrt((dx/x)*(dx/x) + (dy/y)*(dy/y) + (dz/z)*(dz/z));       
-       if (selIVFIsPVScore > pvCompatibilityScore) continue;
+       if (selIVFIsPVScore < pvCompatibilityScore) continue;
        ntuple_.fill_svInfo(vtx, pvs.at(0));	 
      }
 
