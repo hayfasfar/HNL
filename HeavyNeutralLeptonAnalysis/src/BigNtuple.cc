@@ -1,6 +1,5 @@
-#include "FWCore/Framework/interface/Event.h"
 #include "HNL/HeavyNeutralLeptonAnalysis/interface/BigNtuple.h"
-#include "TTree.h"
+#include "TVector3.h"
 
 void BigNtuple::set_evtInfo(TTree* tree) {
 	tree->Branch("run" , &run_, "run/i");
@@ -16,30 +15,30 @@ void BigNtuple::fill_evtInfo(const edm::EventID& id) {
 
 
 void BigNtuple::set_pvInfo(TTree* tree){
-       tree->Branch("pvX" , &pvX_, "pvX/i");
-       tree->Branch("pvY" , &pvY_, "pvY/i");
-       tree->Branch("pvZ" , &pvZ_, "pvZ/i");
-       tree->Branch("pvXErr" , &pvXErr_, "pvXErr/i");
-       tree->Branch("pvYErr" , &pvYErr_, "pvYErr/i");
-       tree->Branch("pvZErr" , &pvZErr_, "pvZErr/i");
-       tree->Branch("pvMass" , &pvMass_, "pvMass/i");
-       tree->Branch("pvLxy" , &pvLxy_, "pvLxy/i");
-       tree->Branch("pvLxyz" , &pvLxyz_, "pvLxyz/i");
-       tree->Branch("pvLxySig" , &pvLxySig_, "pvLxySig/i");
-       tree->Branch("pvLxyzSig" , &pvLxyzSig_, "pvLxyzSig/i");
-       tree->Branch("pvChi2" , &pvChi2_, "pvChi2/i");
+       tree->Branch("pvX" , &pvX_, "pvX/F");
+       tree->Branch("pvY" , &pvY_, "pvY/F");
+       tree->Branch("pvZ" , &pvZ_, "pvZ/F");
+       tree->Branch("pvXErr" , &pvXErr_, "pvXErr/F");
+       tree->Branch("pvYErr" , &pvYErr_, "pvYErr/F");
+       tree->Branch("pvZErr" , &pvZErr_, "pvZErr/F");
+       tree->Branch("pvMass" , &pvMass_, "pvMass/F");
+       tree->Branch("pvLxy" , &pvLxy_, "pvLxy/F");
+       tree->Branch("pvLxyz" , &pvLxyz_, "pvLxyz/F");
+       tree->Branch("pvLxySig" , &pvLxySig_, "pvLxySig/F");
+       tree->Branch("pvLxyzSig" , &pvLxyzSig_, "pvLxyzSig/F");
+       tree->Branch("pvChi2" , &pvChi2_, "pvChi2/F");
        tree->Branch("pvNTrack" , &pvNTrack_, "pvNTrack/i");
-       tree->Branch("pvSumPtSq" , &pvSumPtSq_, "pvSumPtSq/i");
+       tree->Branch("pvSumPtSq" , &pvSumPtSq_, "pvSumPtSq/F");
        tree->Branch("numberPV" , &numberPV_, "numberPV/i");
        
 }
 
-void BigNtuple::fill_pvInfo(const std::vector<reco::VertexCollection>& pvs){
-       numberPV_ = pvs->size();
-       pv = pvs -> front();
+void BigNtuple::fill_pvInfo(const reco::VertexCollection& pvs){
+       numberPV_ = pvs.size();
+       const reco::Vertex& pv = pvs.front();
 
-       float x  = pv->x(), y = pv->y(), z = pv->z();
-       float xE = pv->xError(), yE = pv->yError(), zE = pv->zError();
+       float x  = pv.x(), y = pv.y(), z = pv.z();
+       float xE = pv.xError(), yE = pv.yError(), zE = pv.zError();
        
        pvX_ = x;
        pvY_ = y;
@@ -52,92 +51,152 @@ void BigNtuple::fill_pvInfo(const std::vector<reco::VertexCollection>& pvs){
        pvLxyz_ = std::sqrt( x * x + y * y + z * z);
        pvLxySig_ = std::sqrt( x * x + y * y ) / std::sqrt(xE * xE + yE * yE);
        pvLxyzSig_ = std::sqrt( x * x + y * y + z * z )/ std::sqrt(xE * xE + yE * yE + zE * zE);
-       pvChi2_ = pv->chi2();
+       pvChi2_ = pv.chi2();
 
-       reco::Vertex::trackRef_iterator vtxIter = pv->tracks_begin();
+       reco::Vertex::trackRef_iterator vtxIter = pv.tracks_begin();
        float  SumPtSq =  0;
        int NTrack = 0;
-       for(; vtxIter != pv->tracks_end(); ++vtxIter) {
+       for(; vtxIter != pv.tracks_end(); ++vtxIter) {
          NTrack++;
          SumPtSq += (*vtxIter)->pt() * (*vtxIter)->pt();
        }
-       pvNTrack_.push_back(NTrack);
-       pvSumPtSq_.push_back(SumPtSq);       
+       pvNTrack_ = NTrack;
+       pvSumPtSq_ = SumPtSq;       
 }
 
 
+void BigNtuple::set_trigInfo(TTree* tree){
+  
+    tree->Branch("passIsoTk18" , &passIsoTk18_, "passIsoTk18/O");
+    tree->Branch("passIsoTk20" , &passIsoTk20_, "passIsoTk20/O");
+    tree->Branch("passIsoTk22" , &passIsoTk22_, "passIsoTk22/O");
+    tree->Branch("passIsoTk24" , &passIsoTk24_, "passIsoTk24/O");
+    tree->Branch("passIsoTk27" , &passIsoTk27_, "passIsoTk27/O");
+    tree->Branch("passIsoTk17e" , &passIsoTk17e_, "passIsoTk17e/O");
+    tree->Branch("passIsoTk22e" , &passIsoTk22e_, "passIsoTk22e/O");
+    tree->Branch("passIsoMu18" , &passIsoMu18_, "passIsoMu18/O");
+    tree->Branch("passIsoMu20" , &passIsoMu20_, "passIsoMu20/O");
+    tree->Branch("passIsoMu22" , &passIsoMu22_, "passIsoMu22/O");
+    tree->Branch("passIsoMu24" , &passIsoMu24_, "passIsoMu24/O");
+    tree->Branch("passIsoMu27" , &passIsoMu27_, "passIsoMu27/O");
+    tree->Branch("passIsoMu17e" , &passIsoMu17e_, "passIsoMu17e/O");
+    tree->Branch("passIsoMu22e" , &passIsoMu22e_, "passIsoMu22e/O");
+    tree->Branch("passTkMu17" , &passTkMu17_, "passTkMu17/O");
+    tree->Branch("passTkMu20" , &passTkMu20_, "passTkMu20/O");
+    tree->Branch("passIsoMu24All" , &passIsoMu24All_, "passIsoMu24All/O");
+    tree->Branch("passIsoMu27All" , &passIsoMu27All_, "passIsoMu27All/O");
+    tree->Branch("passDoubleMu17TrkIsoMu8" , &passDoubleMu17TrkIsoMu8_, "passDoubleMu17TrkIsoMu8/O");
+    tree->Branch("passDoubleMu17TrkIsoTkMu8" , &passDoubleMu17TrkIsoTkMu8_, "passDoubleMu17TrkIsoTkMu8/O");
+    tree->Branch("passDoubleTkMu17TrkIsoTkMu8" , &passDoubleTkMu17TrkIsoTkMu8_, "passDoubleTkMu17TrkIsoTkMu8/O");
+
+
+}
+
+void BigNtuple::fill_trigInfo(const edm::TriggerResults& triggerResults, const edm::TriggerNames& trigNames){
+
+  for (size_t i = 0; i < trigNames.size(); ++i) {
+    const std::string &name = trigNames.triggerName(i);
+    bool fired = triggerResults.accept(i);
+    if(!fired) continue;
+
+    passIsoTk18_  |=  name.find("HLT_IsoTkMu18_v") != std::string::npos;
+    passIsoTk20_  |=  name.find("HLT_IsoTkMu20_v") != std::string::npos;
+    passIsoTk22_  |=  name.find("HLT_IsoTkMu22_v") != std::string::npos;
+    passIsoTk24_  |=  name.find("HLT_IsoTkMu24_v") != std::string::npos;
+    passIsoTk27_  |=  name.find("HLT_IsoTkMu27_v") != std::string::npos;
+    passIsoTk17e_  |=  name.find("HLT_IsoTkMu17_eta2p1_v") != std::string::npos;
+    passIsoTk22e_  |=  name.find("HLT_IsoTkMu22_eta2p1_v") != std::string::npos;
+    passIsoMu18_  |=  name.find("HLT_IsoMu18_v") != std::string::npos;
+    passIsoMu20_  |=  name.find("HLT_IsoMu20_v") != std::string::npos;
+    passIsoMu22_  |=  name.find("HLT_IsoMu22_v") != std::string::npos;
+    passIsoMu24_  |=  name.find("HLT_IsoMu24_v") != std::string::npos;
+    passIsoMu27_  |=  name.find("HLT_IsoMu27_v") != std::string::npos;
+
+    passIsoMu17e_ |=  name.find("HLT_IsoTkMu17_eta2p1_v") != std::string::npos;
+    passIsoMu22e_ |=  name.find("HLT_IsoTkMu22_eta2p1_v") != std::string::npos;
+
+    passTkMu17_   |=  name.find("HLT_TkMu17_v") != std::string::npos;
+    passTkMu20_   |=  name.find("HLT_TkMu20_v") != std::string::npos;
+
+    passDoubleMu17TrkIsoMu8_  |=  name.find("HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v") != std::string::npos;
+    passDoubleMu17TrkIsoTkMu8_ |=  name.find("HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v") != std::string::npos;
+    passDoubleTkMu17TrkIsoTkMu8_ |=  name.find("HLT_TkMu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v") != std::string::npos;
+
+  }
+
+  passIsoMu24All_ = passIsoMu24All_   || passIsoMu24_ || passIsoTk24_ ;
+  passIsoMu27All_ = passIsoMu27All_   || passIsoMu27_ || passIsoTk27_ ;
+
+}
+
+  
 
 void BigNtuple::set_svInfo(TTree* tree){
 
-    tree->Branch("sv_TrackSize" , &sv_TrackSize_, "sv_TrackSize/i");
-    tree->Branch("sv_LXYSig" , &sv_LXYSig_, "sv_LXYSig/i");
-    tree->Branch("sv_LXYZSig" , &sv_LXYZSig_, "sv_LXYZSig/i");
-    tree->Branch("sv_LXY" , &sv_LXY_, "sv_LXY/i");
-    tree->Branch("sv_LXYZ" , &sv_LXYZ_, "sv_LXYZ/i");
-    tree->Branch("sv_mass" , &sv_mass_, "sv_mass/i");
-    tree->Branch("sv_charge" , &sv_charge_, "sv_charge/i");
-    tree->Branch("sv_eta" , &sv_eta_, "sv_eta/i");
-    tree->Branch("sv_phi" , &sv_phi_, "sv_phi/i");
-    tree->Branch("sv_pt" , &sv_pt_, "sv_pt/i");
-    tree->Branch("sv_p" , &sv_p_, "sv_p/i");
-    tree->Branch("sv_Beta" , &sv_Beta_, "sv_Beta/i");
-    tree->Branch("sv_Gamma" , &sv_Gamma_, "sv_Gamma/i");
-    tree->Branch("sv_CTau0" , &sv_CTau0_, "sv_CTau0/i");
-    tree->Branch("sv_NDof" , &sv_NDof_, "sv_NDof/i");
-    tree->Branch("sv_Chi2" , &sv_Chi2_, "sv_Chi2/i");
-    tree->Branch("sv_Angle3D" , &sv_Angle3D_, "sv_Angle3D/i");
-    tree->Branch("sv_Angle2D" , &sv_Angle2D_, "sv_Angle2D/i");
-    tree->Branch("sv_bestScore" , &sv_bestScore_, "sv_bestScore/i");
-    tree->Branch("sv2_Match" , &sv2_Match_, "sv2_Match/i");
-    tree->Branch("sv_tracks_charge" , &sv_tracks_charge_, "sv_tracks_charge/i");
-    tree->Branch("sv_tracks_eta" , &sv_tracks_eta_, "sv_tracks_eta/i");
-    tree->Branch("sv_tracks_phi" , &sv_tracks_phi_, "sv_tracks_phi/i");
-    tree->Branch("sv_tracks_pt" , &sv_tracks_pt_, "sv_tracks_pt/i");
-    tree->Branch("sv_tracks_dxySig" , &sv_tracks_dxySig_, "sv_tracks_dxySig/i");
-    tree->Branch("sv_tracks_dxy" , &sv_tracks_dxy_, "sv_tracks_dxy/i");
-    tree->Branch("sv_tracks_dxyz" , &sv_tracks_dxyz_, "sv_tracks_dxyz/i");    
-    tree->Branch("sv_tracks_Sumcharge" , &sv_tracks_Sumcharge_, "sv_tracks_Sumcharge/i");
-    tree->Branch("sv_tracks_Sumpt" , &sv_tracks_Sumpt_, "sv_tracks_Sumpt/i");
-
+    tree->Branch("sv_TrackSize" , &sv_TrackSize_);
+    tree->Branch("sv_LXYSig" , &sv_LXYSig_);
+    tree->Branch("sv_LXYZSig" , &sv_LXYZSig_);
+    tree->Branch("sv_LXY" , &sv_LXY_);
+    tree->Branch("sv_LXYZ" , &sv_LXYZ_);
+    tree->Branch("sv_mass" , &sv_mass_);
+    tree->Branch("sv_charge" , &sv_charge_);
+    tree->Branch("sv_eta" , &sv_eta_);
+    tree->Branch("sv_phi" , &sv_phi_);
+    tree->Branch("sv_pt" , &sv_pt_);
+    tree->Branch("sv_p" , &sv_p_);
+    tree->Branch("sv_Beta" , &sv_Beta_);
+    tree->Branch("sv_Gamma" , &sv_Gamma_);
+    tree->Branch("sv_CTau0" , &sv_CTau0_);
+    tree->Branch("sv_NDof" , &sv_NDof_);
+    tree->Branch("sv_Chi2" , &sv_Chi2_);
+    tree->Branch("sv_Angle3D" , &sv_Angle3D_);
+    tree->Branch("sv_Angle2D" , &sv_Angle2D_);
+    tree->Branch("sv_tracks_charge" , &sv_tracks_charge_);
+    tree->Branch("sv_tracks_eta" , &sv_tracks_eta_);
+    tree->Branch("sv_tracks_phi" , &sv_tracks_phi_);
+    tree->Branch("sv_tracks_pt" , &sv_tracks_pt_);
+    tree->Branch("sv_tracks_dxySig" , &sv_tracks_dxySig_);
+    tree->Branch("sv_tracks_dxy" , &sv_tracks_dxy_);
+    tree->Branch("sv_tracks_dxyz" , &sv_tracks_dxyz_);
+    tree->Branch("sv_tracks_Sumcharge" , &sv_tracks_Sumcharge_);
+    tree->Branch("sv_tracks_Sumpt" , &sv_tracks_Sumpt_);
 }
 
 
-void BigNtuple::fill_svInfo(const reco::Vertex bestVertex, const float bestVertexScore){
-
+void BigNtuple::fill_svInfo(const reco::Vertex& bestVertex, const reco::Vertex& pv){
 
   float  svChi2 = bestVertex.chi2();
   float  svNDof = bestVertex.ndof();
 
-  //flight distance from the firstPV                                                                                                                                                        
+  //flight distance from the firstPV                                                                                                                                  
   float x  = bestVertex.x(), y = bestVertex.y(), z = bestVertex.z();
-  float dx = x - selPV.x() , dy = y - selPV.y(), dz = z - selPV.z();
+  float dx = x - pv.x() , dy = y - pv.y(), dz = z - pv.z();
 
-  // set the compatibility score                                                                                                                                                            
-  float  selIVFIsPVScore = std::sqrt((dx/x)*(dx/x) + (dy/y)*(dy/y) + (dz/z)*(dz/z));
-  selIVFIsPV = selIVFIsPVScore < pvCompatibilityScore; // default 5% consitency check                                                                                                       
-
-  //build the total error                                                                                                                                                                   
+  //build the total error                                                                                                                                                  
   float svxE = bestVertex.xError(), svyE = bestVertex.yError(), svzE = bestVertex.zError();
-  float pvxE = selPV.xError(), pvyE = selPV.yError(), pvzE = selPV.zError();
+  float pvxE = pv.xError(), pvyE = pv.yError(), pvzE = pv.zError();
   float xE   = std::sqrt(svxE * svxE + pvxE * pvxE), yE = std::sqrt(svyE * svyE + pvyE * pvyE), zE = std::sqrt(svzE * svzE + pvzE * pvzE);
 
-  // mother beta, gamma, ctau                                                                                                                                                               
+  // mother beta, gamma, ctau                                                                                                                                              
   float   beta_mom  = bestVertex.p4().P() / bestVertex.p4().energy();
   float   gamma_mom = bestVertex.p4().energy() / bestVertex.p4().mass();
 
-  TVector3 pvVector3D(selPV.x(), selPV.y(), selPV.z());
-  TVector3 pvVector2D(selPV.x(), selPV.y(), 0);
+  TVector3 pvVector3D(pv.x(), pv.y(), pv.z());
+  TVector3 pvVector2D(pv.x(), pv.y(), 0);
   TVector3 svVector3D(x, y, z);
   TVector3 svVector2D(x, y, 0);
 
-  // line pointing form the primary vertex through the sceondary vertex                                                                                                                     
+  // line pointing form the primary vertex through the sceondary vertex                                                                                                 
+                
   TVector3 svMom3D( bestVertex.p4().x(), bestVertex.p4().y(), bestVertex.p4().z());
   TVector3 svMom2D( bestVertex.p4().x(), bestVertex.p4().y(), 0);
 
-  // you want the negative when the momentum and sv are in the same                                                                                                                         
-  // direction relative to the PV                                                                                                                                                           
-  // this makes sure the angle is not pi when the vertex is fit behind                                                                                                                      
-  // the primary vertex                                                                                                                                                                     
+
+  // you want the negative when the momentum and sv are in the same                                                                                                     
+  // direction relative to the PV                                                                                                                                       
+  // this makes sure the angle is not pi when the vertex is fit behind                                                                                                  
+  // the primary vertex                                                                                                                                                  
+                
   float sign2D =  (svMom2D * (svVector2D - pvVector2D)) > 0 ? -1: 1;
   float sign3D =  (svMom3D * (svVector3D - pvVector3D)) > 0 ? -1: 1;
 
@@ -147,211 +206,272 @@ void BigNtuple::fill_svInfo(const reco::Vertex bestVertex, const float bestVerte
   float  svAngle3D = pvToVertex3D.Angle(svMom3D);
   float  svAngle2D = pvToVertex2D.Angle(svMom2D);
 
-  sv_TrackSize_ = selIVFIsPV ? 0 : bestVertex.nTracks();
-  sv_LXY_ = selIVFIsPV ? 0 : std::sqrt( dx * dx + dy * dy );
-  sv_LXYZ_ = selIVFIsPV ? 0 : std::sqrt( dx * dx + dy * dy + dz * dz );
-  sv_LXYSig_ = selIVFIsPV ? 0 : std::sqrt( dx * dx + dy * dy ) / std::sqrt(xE * xE + yE * yE);
-  sv_LXYZSig_ = selIVFIsPV ? 0 :  std::sqrt( dx * dx + dy * dy + dz * dz) / std::sqrt(xE * xE + yE * yE + zE * zE);
-  sv_mass_ = selIVFIsPV ? 0 : bestVertex.p4().mass();
-  sv_eta_ = selIVFIsPV ? 0 : bestVertex.p4().eta();
-  sv_phi_ = selIVFIsPV ? 0 : bestVertex.p4().phi();
-  sv_pt_ = selIVFIsPV ? 0 : bestVertex.p4().pt();
-  sv_p_ = selIVFIsPV ? 0 : bestVertex.p4().P();
-  sv_Beta_ = selIVFIsPV ? 0 : beta_mom;
-  sv_Gamma_ = selIVFIsPV ? 0 : gamma_mom;
-  sv_CTau0_ = selIVFIsPV ? 0 : std::sqrt( dx * dx + dy * dy + dz * dz) / (beta_mom * gamma_mom);
-  sv_NDof_ = selIVFIsPV ? 0 : svNDof;
-  sv_Chi2_ = selIVFIsPV ? 0 : svChi2;
-  sv_Angle3D_ = selIVFIsPV ? -3 : svAngle3D;
-  sv_Angle2D_ = selIVFIsPV ? -3 : svAngle2D;
-
-  sv_bestScore_.push_back(bestVertexScore);
+  sv_TrackSize_.push_back(bestVertex.nTracks());
+  sv_LXY_.push_back(std::sqrt( dx * dx + dy * dy ));
+  sv_LXYZ_.push_back(std::sqrt( dx * dx + dy * dy + dz * dz ));
+  sv_LXYSig_.push_back(std::sqrt( dx * dx + dy * dy ) / std::sqrt(xE * xE + yE * yE));
+  sv_LXYZSig_.push_back(std::sqrt( dx * dx + dy * dy + dz * dz) / std::sqrt(xE * xE + yE * yE + zE * zE));
+  sv_mass_.push_back(bestVertex.p4().mass());
+  sv_eta_.push_back(bestVertex.p4().eta());
+  sv_phi_.push_back(bestVertex.p4().phi());
+  sv_pt_.push_back(bestVertex.p4().pt());
+  sv_p_.push_back(bestVertex.p4().P());
+  sv_Beta_.push_back(beta_mom);
+  sv_Gamma_.push_back(gamma_mom);
+  sv_CTau0_.push_back(std::sqrt( dx * dx + dy * dy + dz * dz) / (beta_mom * gamma_mom));
+  sv_NDof_.push_back(svNDof);
+  sv_Chi2_.push_back(svChi2);
+  sv_Angle3D_.push_back(svAngle3D);
+  sv_Angle2D_.push_back(svAngle2D);
 
   int ch = 0;
   float pt = 0;
 
-  if(!selIVFIsPV && bestVertexScore > 0 ){ //what is this selIVFIsPV??
+  sv_tracks_charge_.emplace_back();
+  sv_tracks_eta_.emplace_back();
+  sv_tracks_phi_.emplace_back();
+  sv_tracks_pt_.emplace_back();
+  sv_tracks_dxySig_.emplace_back();
+  sv_tracks_dxy_.emplace_back();
+  sv_tracks_dxyz_.emplace_back();
+
+  reco::Vertex::trackRef_iterator tt = bestVertex.tracks_begin();
+  for(; tt != bestVertex.tracks_end(); ++tt) {
     
-    reco::Vertex::trackRef_iterator tt = bestVertex.tracks_begin();
-    for(; tt != bestVertex.tracks_end(); ++tt) {
-      
-      sv_tracks_charge_.push_back((*tt)->charge());
-      sv_tracks_eta_.push_back((*tt)->eta());
-      sv_tracks_phi_.push_back((*tt)->phi());
-      sv_tracks_pt_.push_back((*tt)->pt());
-      sv_tracks_dxySig_.push_back(fabs((*tt)->dxy(selPV.position()))/fabs((*tt)->dxyError()));
-      sv_tracks_dxy_.push_back((*tt)->dxy(selPV.position()));
-      
-      ROOT::Math::SVector<double, 3> lxyz1((*tt)->vx()-selPV.position().x(), (*tt)->vy()-selPV.position().y(), (*tt)->vz()-selPV.position().z());
-      float dxyz = (float)ROOT::Math::Mag(lxyz1); // magntude of the vector                                                                                                                 
-      sv_tracks_dxyz_.push_back(dxyz);
-      ch+=(*tt)->charge();
-      pt+=(*tt)->pt();
-    }
-    sv_tracks_Sumcharge_.push_back(ch);
-    sv_tracks_Sumpt_.push_back(pt);
+    sv_tracks_charge_.back().push_back((*tt)->charge());
+    sv_tracks_eta_.back().push_back((*tt)->eta());
+    sv_tracks_phi_.back().push_back((*tt)->phi());
+    sv_tracks_pt_.back().push_back((*tt)->pt());
+    sv_tracks_dxySig_.back().push_back(fabs((*tt)->dxy(pv.position()))/fabs((*tt)->dxyError()));
+    sv_tracks_dxy_.back().push_back((*tt)->dxy(pv.position()));
+    
+    ROOT::Math::SVector<double, 3> lxyz1((*tt)->vx()-pv.position().x(), (*tt)->vy()-pv.position().y(), (*tt)->vz()-pv.position().z());
+    float dxyz = (float)ROOT::Math::Mag(lxyz1); // magntude of the vector                                                                                                                 
+    sv_tracks_dxyz_.back().push_back(dxyz);
+    ch+=(*tt)->charge();
+    pt+=(*tt)->pt();
   }
 
-
-
-	 
+  sv_tracks_Sumcharge_.push_back(ch);
+  sv_tracks_Sumpt_.push_back(pt);
 }
 
 
  void BigNtuple::set_muInfo(TTree* tree){
-   tree->Branch("mu_nbMuon" , &mu_nbMuon_, "mu_nbMuon/i");
-   tree->Branch("mu_en" , &mu_en_, "mu_en/i");
-   tree->Branch("mu_pt" , &mu_pt_, "mu_pt/i");
-   tree->Branch("mu_eta" , &mu_eta_, "mu_eta/i");
-   tree->Branch("mu_phi" , &mu_phi_, "mu_phi/i");
-   tree->Branch("mu_et" , &mu_et_, "mu_et/i");
-   tree->Branch("mu_charge" , &mu_charge_, "mu_charge/i");
-   tree->Branch("mu_trackiso" , &mu_trackiso_, "mu_trackiso/i");
-   tree->Branch("mu_pfSumChargedHadronPt" , &mu_pfSumChargedHadronPt_, "mu_pfSumChargedHadronPt/i");
-   tree->Branch("mu_pfSumNeutralHadronEt" , &mu_pfSumNeutralHadronEt_, "mu_pfSumNeutralHadronEt/i");
-   tree->Branch("mu_PFSumPhotonEt" , &mu_PFSumPhotonEt_, "mu_PFSumPhotonEt/i");
-   tree->Branch("mu_pfSumPUPt" , &mu_pfSumPUPt_, "mu_pfSumPUPt/i");
-   tree->Branch("mu_numberOfValidMuonHits" , &mu_numberOfValidMuonHits_, "mu_numberOfValidMuonHits/i");
-   tree->Branch("mu_emIso" , &mu_emIso_, "mu_emIso/i");
-   tree->Branch("mu_hadIso" , &mu_hadIso_, "mu_hadIso/i");
-   tree->Branch("mu_normalizedChi2" , &mu_normalizedChi2_, "mu_normalizedChi2/i");
-   tree->Branch("mu_numberOfMatchedStations" , &mu_numberOfMatchedStations_, "mu_numberOfMatchedStations/i");
-   tree->Branch("mu_numberOfValidPixelHits" , &mu_numberOfValidPixelHits_, "mu_numberOfValidPixelHits/i");
-   tree->Branch("mu_numberOftrackerLayersWithMeasurement" , &mu_numberOftrackerLayersWithMeasurement_, "mu_numberOftrackerLayersWithMeasurement/i");
-   tree->Branch("mu_numberOfpixelLayersWithMeasurement" , &mu_numberOfpixelLayersWithMeasurement_, "mu_numberOfpixelLayersWithMeasurement/i");
-   tree->Branch("mu_TrackQuality" , &mu_TrackQuality_, "mu_TrackQuality/i");
-   tree->Branch("mu_InnerTrackQuality" , &mu_InnerTrackQuality_, "mu_InnerTrackQuality/i");
-   tree->Branch("mu_pxTunePMuonBestTrack" , &mu_pxTunePMuonBestTrack_, "mu_pxTunePMuonBestTrack/i");
-   tree->Branch("mu_pyTunePMuonBestTrack" , &mu_pyTunePMuonBestTrack_, "mu_pyTunePMuonBestTrack/i");
-   tree->Branch("mu_pzTunePMuonBestTrack" , &mu_pzTunePMuonBestTrack_, "mu_pzTunePMuonBestTrack/i");
-   tree->Branch("mu_pTunePMuonBestTrack" , &mu_pTunePMuonBestTrack_, "mu_pTunePMuonBestTrack/i");
-   tree->Branch("mu_etaTunePMuonBestTrack" , &mu_etaTunePMuonBestTrack_, "mu_etaTunePMuonBestTrack/i");
-   tree->Branch("mu_LXYZ" , &mu_LXYZ_, "mu_LXYZ/i");
-   tree->Branch("mu_LXY" , &mu_LXY_, "mu_LXY/i");
-   tree->Branch("mu_ptTunePMuonBestTrack" , &mu_ptTunePMuonBestTrack_, "mu_ptTunePMuonBestTrack/i");
-   tree->Branch("mu_phiTunePMuonBestTrack" , &mu_phiTunePMuonBestTrack_, "mu_phiTunePMuonBestTrack/i");
-   tree->Branch("mu_thetaTunePMuonBestTrack" , &mu_thetaTunePMuonBestTrack_, "mu_thetaTunePMuonBestTrack/i");
-   tree->Branch("mu_chargeTunePMuonBestTrack" , &mu_chargeTunePMuonBestTrack_, "mu_chargeTunePMuonBestTrack/i");
-   tree->Branch("mu_dPToverPTTunePMuonBestTrack" , &mu_dPToverPTTunePMuonBestTrack_, "mu_dPToverPTTunePMuonBestTrack/i");
-   tree->Branch("mu_absdxyTunePMuonBestTrack" , &mu_absdxyTunePMuonBestTrack_, "mu_absdxyTunePMuonBestTrack/i");
-   tree->Branch("mu_absdxyErrorTunePMuonBestTrack" , &mu_absdxyErrorTunePMuonBestTrack_, "mu_absdxyErrorTunePMuonBestTrack/i");
-   tree->Branch("mu_absdxySigTunePMuonBestTrack" , &mu_absdxySigTunePMuonBestTrack_, "mu_absdxySigTunePMuonBestTrack/i");
-   tree->Branch("mu_absdzTunePMuonBestTrack" , &mu_absdzTunePMuonBestTrack_, "mu_absdzTunePMuonBestTrack/i");
-   tree->Branch("mu_absdzErrorTunePMuonBestTrack" , &mu_absdzErrorTunePMuonBestTrack_, "mu_absdzErrorTunePMuonBestTrack/i");
-   tree->Branch("mu_absdzSigTunePMuonBestTrack" , &mu_absdzSigTunePMuonBestTrack_, "mu_absdzSigTunePMuonBestTrack/i");
-   tree->Branch("mu_recoDeltaBeta" , &mu_recoDeltaBeta_, "mu_recoDeltaBeta/i");
-   tree->Branch("mu_recoiso" , &mu_recoiso_, "mu_recoiso/i");
-   tree->Branch("mu_isGlobalMuon" , &mu_isGlobalMuon_, "mu_isGlobalMuon/i");
-   tree->Branch("mu_isStandAloneMuon" , &mu_isStandAloneMuon_, "mu_isStandAloneMuon/i");
-   tree->Branch("mu_isPF" , &mu_isPF_, "mu_isPF/i");
-   tree->Branch("mu_isRPCMuon" , &mu_isRPCMuon_, "mu_isRPCMuon/i");
-   tree->Branch("mu_isTrackerMuon" , &mu_isTrackerMuon_, "mu_isTrackerMuon/i");
-   tree->Branch("mu_isGoodMuon" , &mu_isGoodMuon_, "mu_isGoodMuon/i");
-   tree->Branch("mu_isSoftMuon" , &mu_isSoftMuon_, "mu_isSoftMuon/i");
-   tree->Branch("mu_isLoose" , &mu_isLoose_, "mu_isLoose/i");
-   tree->Branch("mu_isTightMuon" , &mu_isTightMuon_, "/i");
-   tree->Branch("mu_STAnHits" , &mu_STAnHits_, "mu_STAnHits/i");
-   tree->Branch("mu_STAnLost" , &mu_STAnLost_, "mu_STAnLost/i");
-   tree->Branch("mu_STAnStationsWithAnyHits" , &mu_STAnStationsWithAnyHits_, "mu_STAnStationsWithAnyHits/i");
-   tree->Branch("mu_STAnCscChambersWithAnyHits" , &mu_STAnCscChambersWithAnyHits_, "mu_STAnCscChambersWithAnyHits/i");
-   tree->Branch("mu_STAnDtChambersWithAnyHits" , &mu_STAnDtChambersWithAnyHits_, "mu_STAnDtChambersWithAnyHits/i");
-   tree->Branch("mu_STAnRpcChambersWithAnyHits" , &mu_STAnRpcChambersWithAnyHits_, "mu_STAnRpcChambersWithAnyHits/i");
-   tree->Branch("mu_STAinnermostStationWithAnyHits" , &mu_STAinnermostStationWithAnyHits_, "mu_STAinnermostStationWithAnyHits/i");
-   tree->Branch("mu_STAoutermostStationWithAnyHits" , &mu_STAoutermostStationWithAnyHits_, "mu_STAoutermostStationWithAnyHits/i");
-   tree->Branch("mu_STAnStationsWithValidHits" , &mu_STAnStationsWithValidHits_, "mu_STAnStationsWithValidHits/i");
-   tree->Branch("mu_STAnCscChambersWithValidHits" , &mu_STAnCscChambersWithValidHits_, "mu_STAnCscChambersWithValidHits/i");
-   tree->Branch("mu_STAnDtChambersWithValidHit" , &mu_STAnDtChambersWithValidHit_, "mu_STAnDtChambersWithValidHit/i");
-   tree->Branch("mu_STAnRpcChambersWithValidHits" , &mu_STAnRpcChambersWithValidHits_, "mu_STAnRpcChambersWithValidHits/i");
-   tree->Branch("mu_STAnValidMuonHits" , &mu_STAnValidMuonHits_, "mu_STAnValidMuonHits/i");
-   tree->Branch("mu_STAnValidCscHits" , &mu_STAnValidCscHits_, "mu_STAnValidCscHits/i");
-   tree->Branch("mu_STAnValidDtHits" , &mu_STAnValidDtHits_, "mu_STAnValidDtHits/i");
-   tree->Branch("mu_STAnValidRpcHits" , &mu_STAnValidRpcHits_, "mu_STAnValidRpcHits/i");
-   tree->Branch("mu_STAinnermostStationWithValidHits" , &mu_STAinnermostStationWithValidHits_, "mu_STAinnermostStationWithValidHits/i");
-   tree->Branch("mu_STAoutermostStationWithValidHits" , &mu_STAoutermostStationWithValidHits_, "mu_STAoutermostStationWithValidHits/i");
-   tree->Branch("mu_STATofDirection" , &mu_STATofDirection_, "mu_STATofDirection/i");
-   tree->Branch("mu_STATofNDof" , &mu_STATofNDof_, "mu_STATofNDof/i");
-   tree->Branch("mu_STATofTimeAtIpInOut" , &mu_STATofTimeAtIpInOut_, "mu_STATofTimeAtIpInOut/i");
-   tree->Branch("mu_STATofTimeAtIpInOutErr" , &mu_STATofTimeAtIpInOutErr_, "mu_STATofTimeAtIpInOutErr/i");
-   tree->Branch("mu_STATofTimeAtIpOutIn" , &mu_STATofTimeAtIpOutIn_, "mu_STATofTimeAtIpOutIn/i");
-   tree->Branch("mu_STATofTimeAtIpOutInErr" , &mu_STATofTimeAtIpOutInErr_, "mu_STATofTimeAtIpOutInErr/i");
-   tree->Branch("mu_SecondGenMatch" , &mu_SecondGenMatch_, "mu_SecondGenMatch/i");
-   tree->Branch("mu_FirstGenMatch" , &mu_FirstGenMatch_, "mu_FirstGenMatch/i");
-   tree->Branch("" , &_, "/i");
-
+   tree->Branch("mu_en" , &mu_en_);
+   tree->Branch("mu_pt" , &mu_pt_);
+   tree->Branch("mu_eta" , &mu_eta_);
+   tree->Branch("mu_phi" , &mu_phi_);
+   tree->Branch("mu_et" , &mu_et_);
+   tree->Branch("mu_charge" , &mu_charge_);
+   tree->Branch("mu_trackiso" , &mu_trackiso_);
+   tree->Branch("mu_pfSumChargedHadronPt" , &mu_pfSumChargedHadronPt_);
+   tree->Branch("mu_pfSumNeutralHadronEt" , &mu_pfSumNeutralHadronEt_);
+   tree->Branch("mu_PFSumPhotonEt" , &mu_PFSumPhotonEt_);
+   tree->Branch("mu_pfSumPUPt" , &mu_pfSumPUPt_);
+   tree->Branch("mu_numberOfValidMuonHits" , &mu_numberOfValidMuonHits_);
+   tree->Branch("mu_emIso" , &mu_emIso_);
+   tree->Branch("mu_hadIso" , &mu_hadIso_);
+   tree->Branch("mu_normalizedChi2" , &mu_normalizedChi2_);
+   tree->Branch("mu_numberOfMatchedStations" , &mu_numberOfMatchedStations_);
+   tree->Branch("mu_numberOfValidPixelHits" , &mu_numberOfValidPixelHits_);
+   tree->Branch("mu_numberOftrackerLayersWithMeasurement" , &mu_numberOftrackerLayersWithMeasurement_);
+   tree->Branch("mu_numberOfpixelLayersWithMeasurement" , &mu_numberOfpixelLayersWithMeasurement_);
+   tree->Branch("mu_TrackQuality" , &mu_TrackQuality_);
+   tree->Branch("mu_InnerTrackQuality" , &mu_InnerTrackQuality_);
+   tree->Branch("mu_pxTunePMuonBestTrack" , &mu_pxTunePMuonBestTrack_);
+   tree->Branch("mu_pyTunePMuonBestTrack" , &mu_pyTunePMuonBestTrack_);
+   tree->Branch("mu_pzTunePMuonBestTrack" , &mu_pzTunePMuonBestTrack_);
+   tree->Branch("mu_pTunePMuonBestTrack" , &mu_pTunePMuonBestTrack_);
+   tree->Branch("mu_etaTunePMuonBestTrack" , &mu_etaTunePMuonBestTrack_);
+   tree->Branch("mu_LXYZ" , &mu_LXYZ_);
+   tree->Branch("mu_LXY" , &mu_LXY_);
+   tree->Branch("mu_ptTunePMuonBestTrack" , &mu_ptTunePMuonBestTrack_);
+   tree->Branch("mu_phiTunePMuonBestTrack" , &mu_phiTunePMuonBestTrack_);
+   tree->Branch("mu_thetaTunePMuonBestTrack" , &mu_thetaTunePMuonBestTrack_);
+   tree->Branch("mu_chargeTunePMuonBestTrack" , &mu_chargeTunePMuonBestTrack_);
+   tree->Branch("mu_dPToverPTTunePMuonBestTrack" , &mu_dPToverPTTunePMuonBestTrack_);
+   tree->Branch("mu_absdxyTunePMuonBestTrack" , &mu_absdxyTunePMuonBestTrack_);
+   tree->Branch("mu_absdxyErrorTunePMuonBestTrack" , &mu_absdxyErrorTunePMuonBestTrack_);
+   tree->Branch("mu_absdxySigTunePMuonBestTrack" , &mu_absdxySigTunePMuonBestTrack_);
+   tree->Branch("mu_absdzTunePMuonBestTrack" , &mu_absdzTunePMuonBestTrack_);
+   tree->Branch("mu_absdzErrorTunePMuonBestTrack" , &mu_absdzErrorTunePMuonBestTrack_);
+   tree->Branch("mu_absdzSigTunePMuonBestTrack" , &mu_absdzSigTunePMuonBestTrack_);
+   tree->Branch("mu_recoDeltaBeta" , &mu_recoDeltaBeta_);
+   tree->Branch("mu_recoiso" , &mu_recoiso_);
+   tree->Branch("mu_isGlobalMuon" , &mu_isGlobalMuon_);
+   tree->Branch("mu_isStandAloneMuon" , &mu_isStandAloneMuon_);
+   tree->Branch("mu_isPF" , &mu_isPF_);
+   tree->Branch("mu_isRPCMuon" , &mu_isRPCMuon_);
+   tree->Branch("mu_isTrackerMuon" , &mu_isTrackerMuon_);
+   tree->Branch("mu_isGoodMuon" , &mu_isGoodMuon_);
+   tree->Branch("mu_isSoftMuon" , &mu_isSoftMuon_);
+   tree->Branch("mu_isLoose" , &mu_isLoose_);
+   tree->Branch("mu_isTightMuon" , &mu_isTightMuon_);
+   tree->Branch("mu_STAnHits" , &mu_STAnHits_);
+   tree->Branch("mu_STAnLost" , &mu_STAnLost_);
+   tree->Branch("mu_STAnStationsWithAnyHits" , &mu_STAnStationsWithAnyHits_);
+   tree->Branch("mu_STAnCscChambersWithAnyHits" , &mu_STAnCscChambersWithAnyHits_);
+   tree->Branch("mu_STAnDtChambersWithAnyHits" , &mu_STAnDtChambersWithAnyHits_);
+   tree->Branch("mu_STAnRpcChambersWithAnyHits" , &mu_STAnRpcChambersWithAnyHits_);
+   tree->Branch("mu_STAinnermostStationWithAnyHits" , &mu_STAinnermostStationWithAnyHits_);
+   tree->Branch("mu_STAoutermostStationWithAnyHits" , &mu_STAoutermostStationWithAnyHits_);
+   tree->Branch("mu_STAnStationsWithValidHits" , &mu_STAnStationsWithValidHits_);
+   tree->Branch("mu_STAnCscChambersWithValidHits" , &mu_STAnCscChambersWithValidHits_);
+   tree->Branch("mu_STAnDtChambersWithValidHit" , &mu_STAnDtChambersWithValidHit_);
+   tree->Branch("mu_STAnRpcChambersWithValidHits" , &mu_STAnRpcChambersWithValidHits_);
+   tree->Branch("mu_STAnValidMuonHits" , &mu_STAnValidMuonHits_);
+   tree->Branch("mu_STAnValidCscHits" , &mu_STAnValidCscHits_);
+   tree->Branch("mu_STAnValidDtHits" , &mu_STAnValidDtHits_);
+   tree->Branch("mu_STAnValidRpcHits" , &mu_STAnValidRpcHits_);
+   tree->Branch("mu_STAinnermostStationWithValidHits" , &mu_STAinnermostStationWithValidHits_);
+   tree->Branch("mu_STAoutermostStationWithValidHits" , &mu_STAoutermostStationWithValidHits_);
+   tree->Branch("mu_STATofDirection" , &mu_STATofDirection_);
+   tree->Branch("mu_STATofNDof" , &mu_STATofNDof_);
+   tree->Branch("mu_STATofTimeAtIpInOut" , &mu_STATofTimeAtIpInOut_);
+   tree->Branch("mu_STATofTimeAtIpInOutErr" , &mu_STATofTimeAtIpInOutErr_);
+   tree->Branch("mu_STATofTimeAtIpOutIn" , &mu_STATofTimeAtIpOutIn_);
+   tree->Branch("mu_STATofTimeAtIpOutInErr" , &mu_STATofTimeAtIpOutInErr_);
+   //tree->Branch("mu_SecondGenMatch" , &mu_SecondGenMatch_, "mu_SecondGenMatch/i");
+   //tree->Branch("mu_FirstGenMatch" , &mu_FirstGenMatch_, "mu_FirstGenMatch/i");
+   
 
  }
 
 
 
- void BigNtuple::fill_muInfo(TTree* tree){
+void BigNtuple::fill_muInfo(const pat::Muon& mu, const reco::Vertex& pv){
 
+  mu_isGlobalMuon_.push_back(mu.isGlobalMuon());
+  mu_isPF_.push_back(mu.isPFMuon());
+  mu_isTrackerMuon_.push_back(mu.isTrackerMuon());
+  mu_isRPCMuon_.push_back(mu.isRPCMuon());
+  mu_isStandAloneMuon_.push_back(mu.isStandAloneMuon());
+  mu_isSoftMuon_.push_back(mu.isSoftMuon(pv));
+  mu_isLoose_.push_back(mu.isLooseMuon());
+  mu_isTightMuon_.push_back(mu.isTightMuon(pv));
+  mu_en_.push_back(mu.energy());
+  mu_et_.push_back(mu.et());
+  mu_pt_.push_back(mu.pt());
+  mu_eta_.push_back(mu.eta());
+  mu_phi_.push_back(mu.phi());
+  mu_charge_.push_back(mu.charge());
 
- }
+  reco::TrackRef tunePTrack = mu.muonBestTrack();
 
+  mu_ptTunePMuonBestTrack_.push_back(tunePTrack->pt()); // transverse momentum                                                                                           
+  mu_dPToverPTTunePMuonBestTrack_.push_back(tunePTrack->ptError()/tunePTrack->pt()); // error calculation of transverse momentum                                         
+  mu_pxTunePMuonBestTrack_.push_back(tunePTrack->px()); //px component of the track                                                                                      
+  mu_pyTunePMuonBestTrack_.push_back(tunePTrack->py()); //py component of the track                                                                                      
+  mu_pzTunePMuonBestTrack_.push_back(tunePTrack->pz()); //pz component of the track                                                                                      
+  mu_pTunePMuonBestTrack_.push_back(tunePTrack->p());   //magnitude of momentum vector                                                                                   
+  mu_etaTunePMuonBestTrack_.push_back(tunePTrack->eta());
+  mu_phiTunePMuonBestTrack_.push_back(tunePTrack->phi());
+  mu_thetaTunePMuonBestTrack_.push_back(tunePTrack->theta());
+  mu_chargeTunePMuonBestTrack_.push_back(tunePTrack->charge());
+  mu_absdxyTunePMuonBestTrack_.push_back(fabs(tunePTrack->dxy(pv.position()))); //transvers  impact parameter  w.r.t. the primary vertex                                 
+  mu_absdxyErrorTunePMuonBestTrack_.push_back(fabs(tunePTrack->dxyError())); //transvers  impact parameter  w.r.t. the primary vertex                                    
+  mu_absdxySigTunePMuonBestTrack_.push_back(fabs(tunePTrack->dxy(pv.position()))/fabs(tunePTrack->dxyError()));
+  mu_absdzTunePMuonBestTrack_.push_back(fabs(tunePTrack->dz(pv.position()))); // longitudinal impact parameter  w.r.t. the primary vertex                                
+  mu_absdzErrorTunePMuonBestTrack_.push_back(fabs(tunePTrack->dzError())); // longitudinal impact parameter  w.r.t. the primary vertex                                   
+  mu_absdzSigTunePMuonBestTrack_.push_back(fabs(tunePTrack->dz(pv.position()))/fabs(tunePTrack->dzError()));
+  mu_TrackQuality_.push_back(tunePTrack->quality(reco::TrackBase::highPurity));
 
-void BigNtuple::set_jetInfo(TTree* tree){
+  if(mu.globalTrack().isNonnull() ) {
+    mu_normalizedChi2_.push_back(mu.globalTrack()->normalizedChi2());
+    mu_numberOfValidPixelHits_.push_back(mu.innerTrack()->hitPattern().numberOfValidPixelHits());
+    mu_numberOfValidMuonHits_.push_back(mu.globalTrack()->hitPattern().numberOfValidMuonHits());
+    mu_numberOftrackerLayersWithMeasurement_.push_back(mu.innerTrack()->hitPattern().trackerLayersWithMeasurement());
+    mu_numberOfMatchedStations_.push_back(mu.numberOfMatchedStations());
+    mu_numberOfpixelLayersWithMeasurement_.push_back(mu.innerTrack()->hitPattern().pixelLayersWithMeasurement());
+    mu_InnerTrackQuality_.push_back(mu.innerTrack()->quality(reco::TrackBase::highPurity));
+  }
 
-  tree->Branch("jet_nb" , &jet_nb_, "jet_nb/i");
-  tree->Branch("jet_charge" , &jet_charge_, "jet_charge/i");
-  tree->Branch("jet_et" , &jet_et_, "jet_et/i");
-  tree->Branch("jet_pt" , &jet_pt_, "jet_pt/i");
-  tree->Branch("jet_eta" , &jet_eta_, "jet_eta/i");
-  tree->Branch("jet_phi" , &jet_phi_, "jet_phi/i");
-  tree->Branch("jet_theta" , &jet_theta_, "jet_theta/i");
-  tree->Branch("jet_en" , &jet_en_, "jet_en/i");
-  tree->Branch("jet_chargedEmEnergy" , &jet_chargedEmEnergy_, "jet_chargedEmEnergy/i");
-  tree->Branch("jet_neutralEmEnergyFraction" , &jet_neutralEmEnergyFraction_, "jet_neutralEmEnergyFraction/i");
-  tree->Branch("jet_chargedHadronEnergy" , &jet_chargedHadronEnergy_, "jet_chargedHadronEnergy/i");
-  tree->Branch("jet_neutralHadronEnergyFraction" , &jet_neutralHadronEnergyFraction_, "jet_neutralHadronEnergyFraction/i");
-  tree->Branch("jet_chargedMuEnergy" , &jet_chargedMuEnergy_, "jet_chargedMuEnergy/i");
-  tree->Branch("jet_chargedMuEnergyFraction" , &jet_chargedMuEnergyFraction_, "jet_chargedMuEnergyFraction/i");
-  tree->Branch("jet_numberOfDaughters" , &jet_numberOfDaughters_, "jet_numberOfDaughters/i");
-  tree->Branch("jet_muonEnergy" , &jet_muonEnergy_, "jet_muonEnergy/i");
-  tree->Branch("jet_muonEnergyFraction" , &jet_muonEnergyFraction_, "jet_muonEnergyFraction/i");
-  tree->Branch("jet_muonMultiplicity" , &jet_muonMultiplicity_, "jet_muonMultiplicity/i");
-  tree->Branch("jet_neutralEmEnergy" , &jet_neutralEmEnergy_, "jet_neutralEmEnergy/i");
-  tree->Branch("jet_neutralHadronEnergy" , &jet_neutralHadronEnergy_, "jet_neutralHadronEnergy/i");
-  tree->Branch("jet_neutralHadronMultiplicity" , &jet_neutralHadronMultiplicity_, "jet_neutralHadronMultiplicity/i");
-  tree->Branch("jet_neutralMultiplicity" , &jet_neutralMultiplicity_, "jet_neutralMultiplicity/i");
-  tree->Branch("" , &_, "/i");
+  if(mu.standAloneMuon().isNonnull() ) {
+    mu_STAnHits_.push_back(mu.standAloneMuon()->numberOfValidHits());
+    mu_STAnLost_.push_back(mu.standAloneMuon()->numberOfLostHits());
+    mu_STAnStationsWithAnyHits_.push_back(mu.standAloneMuon()->hitPattern().muonStationsWithAnyHits());
+    mu_STAnCscChambersWithAnyHits_.push_back(mu.standAloneMuon()->hitPattern().cscStationsWithAnyHits()); //csc chambers in track fit                                    
+    mu_STAnDtChambersWithAnyHits_.push_back(mu.standAloneMuon()->hitPattern().dtStationsWithAnyHits()); //dt chambers in track fit                                       
+    mu_STAnRpcChambersWithAnyHits_.push_back(mu.standAloneMuon()->hitPattern().rpcStationsWithAnyHits()); //rpc chambers in track fit                                    
+    mu_STAinnermostStationWithAnyHits_.push_back(mu.standAloneMuon()->hitPattern().innermostMuonStationWithAnyHits());
+    mu_STAoutermostStationWithAnyHits_.push_back(mu.standAloneMuon()->hitPattern().outermostMuonStationWithAnyHits());
+    mu_STAnCscChambersWithValidHits_.push_back(mu.standAloneMuon()->hitPattern().cscStationsWithValidHits()); //csc chambers anywhere near track                         
+
+    mu_STAnDtChambersWithValidHit_.push_back(mu.standAloneMuon()->hitPattern().dtStationsWithValidHits()); //dt chambers anywhere near track                             
+    mu_STAnRpcChambersWithValidHits_.push_back(mu.standAloneMuon()->hitPattern().rpcStationsWithValidHits()); //rpc chambers anywhere near track                         
+    mu_STAnValidCscHits_.push_back(mu.standAloneMuon()->hitPattern().numberOfValidMuonCSCHits()); //CSC hits anywhere near track                                         
+    mu_STAnValidDtHits_.push_back(mu.standAloneMuon()->hitPattern().numberOfValidMuonDTHits()); //DT hits anywhere near track                                            
+    mu_STAnValidRpcHits_.push_back(mu.standAloneMuon()->hitPattern().numberOfValidMuonRPCHits()); //RPC hits anywhere near track                                         
+    mu_STAnValidMuonHits_.push_back(mu.standAloneMuon()->hitPattern().numberOfValidMuonHits()); //muon hits anywhere near track                                          
+    mu_STAinnermostStationWithValidHits_.push_back(mu.standAloneMuon()->hitPattern().innermostMuonStationWithValidHits());
+    mu_STAoutermostStationWithValidHits_.push_back(mu.standAloneMuon()->hitPattern().outermostMuonStationWithValidHits());
+    mu_STAnStationsWithValidHits_.push_back(mu.standAloneMuon()->hitPattern().muonStationsWithValidHits());
+  }
+
+  reco::MuonTime tofAll = mu.time();
+  mu_STATofDirection_.push_back(tofAll.direction());
+  mu_STATofNDof_.push_back(tofAll.nDof);
+  mu_STATofTimeAtIpInOut_.push_back(tofAll.timeAtIpInOut);
+  mu_STATofTimeAtIpInOutErr_.push_back(tofAll.timeAtIpInOutErr);
+  mu_STATofTimeAtIpOutIn_.push_back(tofAll.timeAtIpOutIn);
+  mu_STATofTimeAtIpOutInErr_.push_back(tofAll.timeAtIpOutInErr);
 }
 
 
 
-void BigNtuple::fill_jetInfo(const pat::JetCollection jets){
-  int jetnumber=0;
-  
-  for (const pat::Jet JET : jets) {
-    if( JET.pt() < 0.0 ) continue;
-    if (!( fabs(JET.eta()) < 3 && JET.pt() > 5. )) continue;
-    jetnumber++;
+void BigNtuple::set_jetInfo(TTree* tree){
 
-    jet_charge_.push_back(JET.charge());
-    jet_et_.push_back(JET.et());
-    jet_pt_.push_back(JET.pt());
-    jet_eta_.push_back(JET.eta());
-    jet_phi_.push_back(JET.phi());
-    jet_theta_.push_back(JET.theta());
-    jet_en_.push_back(JET.energy());
-    jet_chargedEmEnergy_.push_back(JET.chargedEmEnergy());
-    jet_neutralEmEnergyFraction_.push_back(JET.neutralEmEnergyFraction());
-    jet_chargedHadronEnergy_.push_back(JET.chargedHadronEnergy());
-    jet_neutralHadronEnergyFraction_.push_back(JET.neutralHadronEnergyFraction());
-    jet_chargedMuEnergy_.push_back(JET.chargedMuEnergy());
-    jet_chargedMuEnergyFraction_.push_back(JET.chargedMuEnergyFraction());
-    jet_chargedMultiplicity_.push_back(JET.chargedMultiplicity());
-    jet_numberOfDaughters_.push_back(JET.numberOfDaughters());
-    jet_muonEnergy_.push_back(JET.muonEnergy());
-    jet_muonEnergyFraction_.push_back(JET.muonEnergyFraction());
-    jet_muonMultiplicity_.push_back(JET.muonMultiplicity());
-    jet_neutralEmEnergy_.push_back(JET.neutralEmEnergy());
-    jet_neutralHadronEnergy_.push_back(JET.neutralHadronEnergy());
-    jet_neutralHadronMultiplicity_.push_back(JET.neutralHadronMultiplicity());
-    jet_neutralMultiplicity_.push_back(JET.neutralMultiplicity());
+  tree->Branch("jet_charge" , &jet_charge_);
+  tree->Branch("jet_et" , &jet_et_);
+  tree->Branch("jet_pt" , &jet_pt_);
+  tree->Branch("jet_eta" , &jet_eta_);
+  tree->Branch("jet_phi" , &jet_phi_);
+  tree->Branch("jet_theta" , &jet_theta_);
+  tree->Branch("jet_en" , &jet_en_);
+  tree->Branch("jet_chargedEmEnergy" , &jet_chargedEmEnergy_);
+  tree->Branch("jet_neutralEmEnergyFraction" , &jet_neutralEmEnergyFraction_);
+  tree->Branch("jet_chargedHadronEnergy" , &jet_chargedHadronEnergy_);
+  tree->Branch("jet_neutralHadronEnergyFraction" , &jet_neutralHadronEnergyFraction_);
+  tree->Branch("jet_chargedMuEnergy" , &jet_chargedMuEnergy_);
+  tree->Branch("jet_chargedMuEnergyFraction" , &jet_chargedMuEnergyFraction_);
+  tree->Branch("jet_numberOfDaughters" , &jet_numberOfDaughters_);
+  tree->Branch("jet_muonEnergy" , &jet_muonEnergy_);
+  tree->Branch("jet_muonEnergyFraction" , &jet_muonEnergyFraction_);
+  tree->Branch("jet_muonMultiplicity" , &jet_muonMultiplicity_);
+  tree->Branch("jet_neutralEmEnergy" , &jet_neutralEmEnergy_);
+  tree->Branch("jet_neutralHadronEnergy" , &jet_neutralHadronEnergy_);
+  tree->Branch("jet_neutralHadronMultiplicity" , &jet_neutralHadronMultiplicity_);
+  tree->Branch("jet_neutralMultiplicity" , &jet_neutralMultiplicity_);
 
-  }
+}
 
-  jet_nb_ = jetnumber;
+
+
+void BigNtuple::fill_jetInfo(const pat::Jet& jet){
+
+  jet_charge_.push_back(jet.charge());
+  jet_et_.push_back(jet.et());
+  jet_pt_.push_back(jet.pt());
+  jet_eta_.push_back(jet.eta());
+  jet_phi_.push_back(jet.phi());
+  jet_theta_.push_back(jet.theta());
+  jet_en_.push_back(jet.energy());
+  jet_chargedEmEnergy_.push_back(jet.chargedEmEnergy());
+  jet_neutralEmEnergyFraction_.push_back(jet.neutralEmEnergyFraction());
+  jet_chargedHadronEnergy_.push_back(jet.chargedHadronEnergy());
+  jet_neutralHadronEnergyFraction_.push_back(jet.neutralHadronEnergyFraction());
+  jet_chargedMuEnergy_.push_back(jet.chargedMuEnergy());
+  jet_chargedMuEnergyFraction_.push_back(jet.chargedMuEnergyFraction());
+  jet_chargedMultiplicity_.push_back(jet.chargedMultiplicity());
+  jet_numberOfDaughters_.push_back(jet.numberOfDaughters());
+  jet_muonEnergy_.push_back(jet.muonEnergy());
+  jet_muonEnergyFraction_.push_back(jet.muonEnergyFraction());
+  jet_muonMultiplicity_.push_back(jet.muonMultiplicity());
+  jet_neutralEmEnergy_.push_back(jet.neutralEmEnergy());
+  jet_neutralHadronEnergy_.push_back(jet.neutralHadronEnergy());
+  jet_neutralHadronMultiplicity_.push_back(jet.neutralHadronMultiplicity());
+  jet_neutralMultiplicity_.push_back(jet.neutralMultiplicity());
 
 }
 
@@ -360,22 +480,22 @@ void BigNtuple::fill_jetInfo(const pat::JetCollection jets){
 
 void BigNtuple::set_metInfo(TTree* tree){
 
-  tree->Branch("pfMet_et" , &pfMet_et_, "pfMet_et/i");
-  tree->Branch("pfMet_pt" , &pfMet_pt_, "pfMet_pt/i");
-  tree->Branch("pfMet_phi" , &pfMet_phi_, "pfMet_phi/i");
-  tree->Branch("pfMet_en" , &pfMet_en_, "pfMet_en/i");
-  tree->Branch("pfMet_px" , &pfMet_px_, "pfMet_px/i");
-  tree->Branch("pfMet_py" , &pfMet_py_, "pfMet_py/i");
-  tree->Branch("pfMet_pz" , &pfMet_pz_, "pfMet_pz/i");
-  tree->Branch("pfMet_sumEt" , &pfMet_sumEt_, "pfMet_sumEt/i");
-  tree->Branch("caloMet_pt" , &caloMet_pt_, "caloMet_pt/i");
-  tree->Branch("caloMet_phi" , &caloMet_phi_, "caloMet_phi/i");   
+  tree->Branch("pfMet_et" , &pfMet_et_, "pfMet_et/F");
+  tree->Branch("pfMet_pt" , &pfMet_pt_, "pfMet_pt/F");
+  tree->Branch("pfMet_phi" , &pfMet_phi_, "pfMet_phi/F");
+  tree->Branch("pfMet_en" , &pfMet_en_, "pfMet_en/F");
+  tree->Branch("pfMet_px" , &pfMet_px_, "pfMet_px/F");
+  tree->Branch("pfMet_py" , &pfMet_py_, "pfMet_py/F");
+  tree->Branch("pfMet_pz" , &pfMet_pz_, "pfMet_pz/F");
+  tree->Branch("pfMet_sumEt" , &pfMet_sumEt_, "pfMet_sumEt/F");
+  tree->Branch("caloMet_pt" , &caloMet_pt_, "caloMet_pt/F");
+  tree->Branch("caloMet_phi" , &caloMet_phi_, "caloMet_phi/F");   
   
 }
 
 
 
-void BigNtuple::fill_metInfo(const pat::MET met){
+void BigNtuple::fill_metInfo(const pat::MET& met){
 
   pfMet_et_ = met.et();
   pfMet_pt_ = met.pt();

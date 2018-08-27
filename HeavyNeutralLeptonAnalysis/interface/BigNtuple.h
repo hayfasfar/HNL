@@ -5,10 +5,19 @@
 	 Simple interface class to hide all the ROOT I/O from the plugin and make it more readable
 */
 
-class TTree;
-namespace edm {
-	class EventID;
-}
+#include <vector>
+
+#include "TTree.h"
+
+#include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
+#include "DataFormats/PatCandidates/interface/Jet.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
+#include "FWCore/Common/interface/TriggerNames.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "FWCore/Framework/interface/Event.h"
 
 class BigNtuple {
 public:
@@ -18,19 +27,22 @@ public:
 	void fill_evtInfo(const edm::EventID& id);
 
 	void set_pvInfo(TTree* tree);
-	void fill_pvInfo(const std::vector<reco::VertexCollection>& pvs);
+	void fill_pvInfo(const reco::VertexCollection& pvs);
+
+	void set_trigInfo(TTree* tree);
+	void fill_trigInfo(const edm::TriggerResults& triggerResults, const edm::TriggerNames& trigNames);
 
 	void set_svInfo(TTree* tree);
-        void fill_svInfo(?????);
+        void fill_svInfo(const reco::Vertex& bestVertex, const reco::Vertex& pv);
 
 	void set_muInfo(TTree* tree);
-        void fill_muInfo(?????);
+        void fill_muInfo(const pat::Muon& mu, const reco::Vertex& pv);
 	
 	void set_jetInfo(TTree* tree);
-	void fill_jetInfo(TTree* ????);
+	void fill_jetInfo(const pat::Jet& jet);
 
         void set_metInfo(TTree* tree);
-        void fill_metInfo(TTree* ????);
+        void fill_metInfo(const pat::MET& met);
 	 
 	void reset() {
 	  BigNtuple dummy; //create a new one
@@ -57,7 +69,36 @@ private:
 	float pvChi2_ = -1000;
 	int pvNTrack_ = -1000;
 	float pvSumPtSq_ = -1000;
-	int numberPV_    = -1000; 
+	int numberPV_    = -1000;
+
+	//trigger infos
+
+	bool passIsoTk18_  = 0;
+	bool passIsoTk20_  = 0;
+	bool passIsoTk22_  = 0;
+	bool passIsoTk24_  = 0;
+	bool passIsoTk27_  = 0;
+	bool passIsoTk17e_ = 0;
+	bool passIsoTk22e_ = 0;
+	
+	bool passIsoMu18_  = 0;
+	bool passIsoMu20_  = 0;
+	bool passIsoMu22_  = 0;
+	bool passIsoMu24_  = 0;
+	bool passIsoMu27_  = 0;
+	bool passIsoMu17e_ = 0;
+	bool passIsoMu22e_ = 0;
+	bool passTkMu17_   = 0;
+	bool passTkMu20_   = 0;
+	
+	bool passIsoMu24All_ = 0;
+	bool passIsoMu27All_ = 0;
+	
+	bool passDoubleMu17TrkIsoMu8_     = 0;
+	bool passDoubleMu17TrkIsoTkMu8_   = 0;
+	bool passDoubleTkMu17TrkIsoTkMu8_ = 0;
+
+ 
 	//secondary verteces info
 
 	std::vector<int>   sv_TrackSize_;
@@ -78,23 +119,20 @@ private:
 	std::vector<float> sv_Chi2_;
 	std::vector<float> sv_Angle3D_;
 	std::vector<float> sv_Angle2D_;
-	std::vector<float> sv_bestScore_;
-	std::vector<float> sv2_Match_; //?????
 
-	std::vector<int>   sv_tracks_charge_;
-	std::vector<float> sv_tracks_eta_;
-	std::vector<float> sv_tracks_phi_;
-	std::vector<float> sv_tracks_pt_;
-	std::vector<float> sv_tracks_dxySig_;
-	std::vector<float> sv_tracks_dxy_;
-	std::vector<float> sv_tracks_dxyz_;
+	std::vector<std::vector<int  > > sv_tracks_charge_;
+	std::vector<std::vector<float> > sv_tracks_eta_;
+	std::vector<std::vector<float> > sv_tracks_phi_;
+	std::vector<std::vector<float> > sv_tracks_pt_;
+	std::vector<std::vector<float> > sv_tracks_dxySig_;
+	std::vector<std::vector<float> > sv_tracks_dxy_;
+	std::vector<std::vector<float> > sv_tracks_dxyz_;
 
-	std::vector<int>   sv_tracks_Sumcharge_;
+	std::vector<int  > sv_tracks_Sumcharge_;
 	std::vector<float> sv_tracks_Sumpt_;
 
 
 	//muon infos
-	std::vector<int>   mu_nbMuon_ ;
 	std::vector<float> mu_en_ ;
 	std::vector<float> mu_pt_ ;
 	std::vector<float> mu_eta_ ;
@@ -169,11 +207,11 @@ private:
 	std::vector<float>  mu_STATofTimeAtIpInOutErr_ ;
 	std::vector<float>  mu_STATofTimeAtIpOutIn_ ;
 	std::vector<float>  mu_STATofTimeAtIpOutInErr_ ;
-	std::vector<float>  mu_SecondGenMatch_ ;
-	std::vector<float>  mu_FirstGenMatch_ ;
+	//std::vector<float>  mu_SecondGenMatch_ ;
+	//std::vector<float>  mu_FirstGenMatch_ ;
 
 	//jet info
-	std::vector<int>     jet_nb_ ;
+
 	std::vector<float>   jet_charge_ ;
 	std::vector<float>   jet_et_ ;
 	std::vector<float>   jet_pt_ ;
@@ -199,18 +237,16 @@ private:
 
 	//MET info
 	
-	std::vector<float>     pfMet_et_ ;
-	std::vector<float>     pfMet_pt_ ;
-	std::vector<float>     pfMet_phi_ ;
-	std::vector<float>     pfMet_en_ ;
-	std::vector<float>     pfMet_px_ ;
-	std::vector<float>     pfMet_py_ ;
-	std::vector<float>     pfMet_pz_ ;
-	std::vector<float>     pfMet_sumEt_ ;
-	std::vector<float>     caloMet_pt_ ;
-	std::vector<float>     caloMet_phi_ ;
-
-
+	float  pfMet_et_ = -1000;
+	float  pfMet_pt_ = -1000;
+	float  pfMet_phi_ = -1000;
+	float  pfMet_en_ = -1000;
+	float  pfMet_px_ = -1000;
+	float  pfMet_py_ = -1000;
+	float  pfMet_pz_ = -1000;
+	float  pfMet_sumEt_ = -1000;
+	float  caloMet_pt_ = -1000;
+	float  caloMet_phi_ = -1000;
 
 }; 
 

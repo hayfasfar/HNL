@@ -88,7 +88,6 @@
 #include "EgammaAnalysis/ElectronTools/interface/ElectronEnergyCalibratorRun2.h"
 #include "EgammaAnalysis/ElectronTools/interface/PhotonEnergyCalibratorRun2.h"
 #include "HNL/HeavyNeutralLeptonAnalysis/interface/BigNtuple.h"
-#include "HNL/DisplacedSVAssociator/interface/VertexAssociation.h"
 
 using namespace std;
 
@@ -107,10 +106,13 @@ public:
   explicit HeavyNeutralLeptonAnalysis(const edm::ParameterSet&);
   ~HeavyNeutralLeptonAnalysis();
   
-  vector<reco::VertexCollection> PrimaryVertex( const reco::VertexCollection &vtx);
+  reco::VertexCollection getMatchedVertex(const pat::Muon & mu, const reco::VertexCollection& vertexCollection);
+  reco::VertexCollection PrimaryVertex( const reco::VertexCollection &vtx);
   bool isAncestor(const reco::Candidate* ancestor, const reco::Candidate* particle);
+  /* they do not compile
   double MatchGenFirstMuon(const edm::Event&,  reco::TrackRef BestTrack);
   double MatchGenSecondMuon(const edm::Event&,  reco::TrackRef BestTrack);
+  */
   double MatchGenVertex(const edm::Event& iEvent, reco::Vertex vertex);
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
   
@@ -136,35 +138,6 @@ private:
   //======================= Primary Vertex Information ========================//                     
  
   //============= Trigger Information ===========================//  
-  static const Int_t MAX_TRIGGERS      = 200;
-  Int_t  nTrig;
-  std::vector<std::string>   triggerNames;
-  Int_t         triggerPass[MAX_TRIGGERS];
-  Int_t           passIsoTk18 ;
-  Int_t           passIsoTk20 ;
-  Int_t           passIsoTk22 ;
-  Int_t           passIsoTk24 ;
-  Int_t           passIsoTk27 ;
-  Int_t           passIsoTk17e;
-  Int_t           passIsoTk22e;
-
-  Int_t           passIsoMu18 ;
-  Int_t           passIsoMu20 ;
-  Int_t           passIsoMu22 ;
-  Int_t           passIsoMu24 ;
-  Int_t           passIsoMu27 ;
-  Int_t           passIsoMu17e;
-  Int_t           passIsoMu22e;
-  Int_t           passTkMu17  ;
-  Int_t           passTkMu20  ;
-
-
-  Int_t           passIsoMu24All;
-  Int_t           passIsoMu27All;
-
-  Int_t           passDoubleMu17TrkIsoMu8    ;
-  Int_t           passDoubleMu17TrkIsoTkMu8  ;
-  Int_t           passDoubleTkMu17TrkIsoTkMu8;
   
   //============= Secondary Vertex Information ===========================//
 
@@ -221,7 +194,7 @@ protected:
   edm::Handle             < pat::METCollection > metsHandle;
   edm::Handle            < edm::TriggerResults > triggerResultsHandle;
   edm::Handle            < edm::TriggerResults > metFilterResultsHandle;
-  edm::Handle         < reco::VertexCollection > SecondaryVertex;
+  edm::Handle         < reco::VertexCollection > secondaryVertexHandle;
   
   /* Only for MC */
   edm::Handle    < reco::GenParticleCollection > genHandle;
@@ -268,8 +241,13 @@ HeavyNeutralLeptonAnalysis::HeavyNeutralLeptonAnalysis(const edm::ParameterSet& 
   usesResource("TFileService");
 
   tree_ = fs->make<TTree>("tree_", "tree");
-  ntuple_.set_evtinfo(tree_);
-
+  ntuple_.set_evtInfo(tree_);
+  ntuple_.set_jetInfo(tree_);
+  ntuple_.set_metInfo(tree_);
+  ntuple_.set_trigInfo(tree_);
+  ntuple_.set_pvInfo(tree_);
+  ntuple_.set_svInfo(tree_);
+  ntuple_.set_muInfo(tree_);
 }
 
 
@@ -293,7 +271,7 @@ void HeavyNeutralLeptonAnalysis::initialize(const edm::Event& iEvent){
   iEvent.getByToken(pfMETAODToken_, metsHandle);
   iEvent.getByToken(triggerResultsToken_, triggerResultsHandle);
   iEvent.getByToken(metFilterResultsToken_, metFilterResultsHandle);
-  iEvent.getByToken(inclusiveSecondaryVertices_, SecondaryVertex);
+  iEvent.getByToken(inclusiveSecondaryVertices_, secondaryVertexHandle);
 
   if (isMC){
     iEvent.getByToken(genParticleToken_, genHandle);
@@ -308,17 +286,49 @@ void HeavyNeutralLeptonAnalysis::initialize(const edm::Event& iEvent){
 //
 // member functions
 
-std::vector<reco::VertexCollection> HeavyNeutralLeptonAnalysis::PrimaryVertex( const reco::VertexCollection &vtx)
-{
-  std::vector<reco::VertexCollection> allPVs;
+reco::VertexCollection HeavyNeutralLeptonAnalysis::getMatchedVertex(const pat::Muon & muon, const reco::VertexCollection& vertexCollection){
+  reco::VertexCollection  matchedVertices;
+  //cout<<muon.pfCandidateRef().isNull() << "  " <<muon.pfCandidateRef().isAvailable()<<endl;
+  //cout << "Orig PTR: Num " << muon.numberOfSourceCandidatePtrs() 
+  //     << " first : " << muon.sourceCandidatePtr(0).isAvailable() << " " << muon.sourceCandidatePtr(0).isNonnull() << endl;
+  const pat::PackedCandidate* cand = dynamic_cast<const pat::PackedCandidate*>(muon.sourceCandidatePtr(0).get());
+  //cout << "Packed: " << cand << endl;
+  if(!cand) {
+    cout << "THIS SHOULD NEVER HAPPEN! No packed candidated associated to muon?!" << endl;
+  }
+  //cout << "Packed: " << cand->hasTrackDetails() << " " << (cand->charge() != 0) << " " <<  (cand->numberOfHits() > 0) << endl;
+  if(!(cand->hasTrackDetails() && cand->charge() != 0 && cand->numberOfHits() > 0)) {
+    cout << "THIS SHOULD NEVER HAPPEN! Muon without track or matched to neutral?!" << endl;
+  }
+  //cout << cand->pseudoTrack().pt() << " " << cand->pseudoTrack().eta() << " " << cand->pseudoTrack().phi() << endl;
 
-    for(reco::VertexCollection::const_iterator PV = vtx.begin(); PV!=vtx.end();++PV) 
+  for(reco::VertexCollection::const_iterator ss = vertexCollection.begin(); ss != vertexCollection.end(); ++ss) {    
+    cout <<"new vertex"<<endl;
+    for(reco::Vertex::trackRef_iterator tt = ss->tracks_begin(); tt != ss->tracks_end(); ++tt) {
+      //cout<<"Track " << (*tt)->pt() << "  "<< (*tt)->eta()<< " " << (*tt)->phi() <<endl;
+      //cout << "match " << (cand->pseudoTrack().pt() == tt->castTo<reco::TrackRef>()->pt()) << endl;
+      if((cand->pseudoTrack().pt() == tt->castTo<reco::TrackRef>()->pt())) { //Options here: innerTrack, globalTrack, muonBestTrack, outerTrack, pickyTrack, track
+        matchedVertices.push_back(*ss);
+	break;
+      }
+    }
+  } 
+  return matchedVertices;
+}
+
+
+
+reco::VertexCollection HeavyNeutralLeptonAnalysis::PrimaryVertex( const reco::VertexCollection &vtx)
+{
+  reco::VertexCollection allPVs;
+
+  for(reco::VertexCollection::const_iterator PV = vtx.begin(); PV!=vtx.end();++PV) 
     {
-       if(!PV->isFake()) {
-         if(PV->ndof() > 4 && fabs(PV->position().z()) <= 24 && fabs(PV->position().rho()) <= 2 ) allPVs.push_back(*PV);
-       }
+      if(!PV->isFake()) {
+	if(PV->ndof() > 4 && fabs(PV->position().z()) <= 24 && fabs(PV->position().rho()) <= 2 ) allPVs.push_back(*PV);
+      }
     } 
-  return  allPV;
+  return  allPVs;
 }
 
 //======================================================================================// 
@@ -331,8 +341,9 @@ bool HeavyNeutralLeptonAnalysis::isAncestor(const reco::Candidate* ancestor,cons
     }
   return false;
 }
+/* They do not compile
 //===================================== First Muon Gen Match ================================================//
-double HeavyNeutralLeptonAnalysis::MatchGenFirstMuon(const edm::Event& iEvent, reco::TrackRef BestTrack) {
+int HeavyNeutralLeptonAnalysis::MatchGenFirstMuon(const edm::Event& iEvent, reco::TrackRef BestTrack) {
   double minDeltaR=999;
   double recoGenDeltaR_ = 0.2;
   int genIndex=-999;
@@ -357,7 +368,7 @@ double HeavyNeutralLeptonAnalysis::MatchGenFirstMuon(const edm::Event& iEvent, r
   else return -999;
 }
 //===================================== Second Muon Gen Match ================================================// 
-double HeavyNeutralLeptonAnalysis::MatchGenSecondMuon(const edm::Event& iEvent,reco::TrackRef BestTrack) {
+int HeavyNeutralLeptonAnalysis::MatchGenSecondMuon(const edm::Event& iEvent,reco::TrackRef BestTrack) {
   double minDeltaR=999;
   double recoGenDeltaR_ = 0.2;
   int genIndex=-999;
@@ -381,6 +392,7 @@ double HeavyNeutralLeptonAnalysis::MatchGenSecondMuon(const edm::Event& iEvent,r
   if (minDeltaR<recoGenDeltaR_) return genIndex;
   else return -999;
 }
+*/
 //===================================== Displaced Vertex Gen Match ================================================// 
 double HeavyNeutralLeptonAnalysis::MatchGenVertex(const edm::Event& iEvent, reco::Vertex vertex) {
   double minDVertex=999;
@@ -416,7 +428,8 @@ void HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::Ev
   using namespace edm;
   
   initialize(iEvent);
-  
+
+  ntuple_.reset();
   ntuple_.fill_evtInfo(iEvent.id());
   
   //============================================================= 
@@ -424,15 +437,10 @@ void HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::Ev
   //             Primary Vertex
   // 
   //=============================================================   
-   reco::VertexCollection vtx;
-  
-  if(vtxHandle.isValid()){
-    vtx = *vtxHandle;
-    std::vector<reco::VertexCollection> pvs = PrimaryVertex(vtx);
-    ntuple_.fill_evtInfo(pvs);
-  }
-  
-  else continue;
+  if(!vtxHandle.isValid()) return;
+  reco::VertexCollection pvs = PrimaryVertex(*vtxHandle);  
+  if(!pvs.size()) return;
+  ntuple_.fill_pvInfo(pvs);    
 
   //=============================================================
    //
@@ -441,287 +449,92 @@ void HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::Ev
    //=============================================================     
    const edm::TriggerResults triggerResults =  *triggerResultsHandle.product();
    const edm::TriggerNames&    trigNames  = iEvent.triggerNames(triggerResults);
-   nTrig = 0;
 
-   passIsoTk18  = 0;
-   passIsoTk20  = 0;
-   passIsoTk22  = 0;
-   passIsoTk24  = 0;
-   passIsoTk27  = 0;
-   passIsoTk17e = 0;
-   passIsoTk22e = 0;
-
-   passIsoMu18  = 0;
-   passIsoMu20  = 0;
-   passIsoMu22  = 0;
-   passIsoMu24  = 0;
-   passIsoMu27  = 0;
-   passIsoMu17e = 0;
-   passIsoMu22e = 0;
-   passTkMu17   = 0;
-   passTkMu20   = 0;
-
-   passIsoMu24All = 0;
-   passIsoMu27All = 0;
-
-   passDoubleMu17TrkIsoMu8     = 0;
-   passDoubleMu17TrkIsoTkMu8   = 0;
-   passDoubleTkMu17TrkIsoTkMu8 = 0;
-
-   for (size_t i = 0; i < trigNames.size(); ++i) {
-     const std::string &name = trigNames.triggerName(i);
-     bool fired = triggerResults.accept(i);
-     
-     if(!fired) continue;
-     // specific triggers iso muons                                                                                                                  
-     std::size_t searchHTIsoMu18    = name.find("HLT_IsoMu18_v");
-     std::size_t searchHTIsoMu20    = name.find("HLT_IsoMu20_v");
-     std::size_t searchHTIsoMu22    = name.find("HLT_IsoMu22_v");                                                                                  
-     std::size_t searchHTIsoMu24    = name.find("HLT_IsoMu24_v");
-     std::size_t searchHTIsoMu27    = name.find("HLT_IsoMu27_v");
-     std::size_t searchHTIsoMu17e   = name.find("HLT_IsoMu17_eta2p1_v");
-     std::size_t searchHTIsoMu22e   = name.find("HLT_IsoMu22_eta2p1_v");                                                                           
-
-     //ISO TRACK                                                                                                                                     
-     std::size_t searchHTIsoTk18          = name.find("HLT_IsoTkMu18_v");
-     std::size_t searchHTIsoTk20          = name.find("HLT_IsoTkMu20_v");
-     std::size_t searchHTIsoTk22          = name.find("HLT_IsoTkMu22_v");                                                                          
-     std::size_t searchHTIsoTk24          = name.find("HLT_IsoTkMu24_v");
-     std::size_t searchHTIsoTk27          = name.find("HLT_IsoTkMu27_v");
-     std::size_t searchHTIsoTk17e         = name.find("HLT_IsoTkMu17_eta2p1_v");
-     std::size_t searchHTIsoTk22e         = name.find("HLT_IsoTkMu22_eta2p1_v");                                                                   
-
-     std::size_t searchHTTkMu17           = name.find("HLT_TkMu17_v");
-     std::size_t searchHTTkMu20           = name.find("HLT_TkMu20_v");
-
-     std::size_t searchDoubleMu17TrkIsoMu8     = name.find("HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v");
-     std::size_t searchDoubleMu17TrkIsoTkMu8   = name.find("HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v");
-     std::size_t searchDoubleTkMu17TrkIsoTkMu8 = name.find("HLT_TkMu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v");
-
-     bool    htist_18                 = searchHTIsoTk18               != std::string::npos ;
-     bool    htist_20                 = searchHTIsoTk20               != std::string::npos ;
-     bool    htist_22                 = searchHTIsoTk22               != std::string::npos ;                                                         
-     bool    htist_24                 = searchHTIsoTk24               != std::string::npos ;
-     bool    htist_27                 = searchHTIsoTk27               != std::string::npos ;
-     bool    htist_17e                = searchHTIsoTk17e              != std::string::npos ;
-     bool    htist_22e                = searchHTIsoTk22e              != std::string::npos ;                                                         
-
-     bool    htism_18                 = searchHTIsoMu18               != std::string::npos ;
-     bool    htism_20                 = searchHTIsoMu20               != std::string::npos ;
-     bool    htism_22                 = searchHTIsoMu22               != std::string::npos ;                                                         
-     bool    htism_24                 = searchHTIsoMu24               != std::string::npos ;
-     bool    htism_27                 = searchHTIsoMu27               != std::string::npos ;
-     bool    htism_17e                = searchHTIsoMu17e              != std::string::npos ;
-     bool    htism_22e                = searchHTIsoMu22e              != std::string::npos ;                                                         
-
-     bool    httkm_17                 = searchHTTkMu17                != std::string::npos ;
-     bool    httkm_20                 = searchHTTkMu20                != std::string::npos ;
-
-     bool    DoubleMu17TrkIsoMu8      = searchDoubleMu17TrkIsoMu8     != std::string::npos ;
-     bool    DoubleMu17TrkIsoTkMu8    = searchDoubleMu17TrkIsoTkMu8   != std::string::npos ;
-     bool    DoubleTkMu17TrkIsoTkMu8  = searchDoubleTkMu17TrkIsoTkMu8 != std::string::npos ;
-
-     passIsoTk18  =  passIsoTk18    || htist_18;
-     passIsoTk20  =  passIsoTk20    || htist_20;
-     passIsoTk22  =  passIsoTk22    || htist_22;   
-     passIsoTk24  =  passIsoTk24    || htist_24;
-     passIsoTk27  =  passIsoTk27    || htist_27;
-     passIsoTk17e =  passIsoTk17e   || htist_17e;
-     passIsoTk22e =  passIsoTk22e   || htist_22e;  
-
-     passIsoMu18  = passIsoMu18    || htism_18;
-     passIsoMu20  = passIsoMu20    || htism_20;
-     passIsoMu22  = passIsoMu22    || htism_22; 
-     passIsoMu24  = passIsoMu24    || htism_24;
-     passIsoMu27  = passIsoMu27    || htism_27;
-     passIsoMu17e = passIsoMu17e   || htism_17e;
-     passIsoMu22e = passIsoMu22e   || htism_22e;                             
-
-     passTkMu17   = passTkMu17     || httkm_17;
-     passTkMu20   = passTkMu20     || httkm_20;
-
-
-     passIsoMu24All = passIsoMu24All   || passIsoMu24 || passIsoTk24 ;
-     passIsoMu27All = passIsoMu27All   || passIsoMu27 || passIsoTk27 ;
-
-     passDoubleMu17TrkIsoMu8     = passDoubleMu17TrkIsoMu8     ||     DoubleMu17TrkIsoMu8 ;   
-     passDoubleMu17TrkIsoTkMu8   = passDoubleMu17TrkIsoTkMu8   ||     DoubleMu17TrkIsoTkMu8 ; 
-     passDoubleTkMu17TrkIsoTkMu8 = passDoubleTkMu17TrkIsoTkMu8 ||     DoubleTkMu17TrkIsoTkMu8 ; 
-
-   }
-
-   //=============================================================
-   //
-   //                Secondary Vertex
-   //
-   //============================================================= 
+   ntuple_.fill_trigInfo(triggerResults, trigNames);
     
-   reco::VertexCollection sv;
-   if(SecondaryVertex.isValid() && muonsHandle.isValid()){ 
 
-     sv = *SecondaryVertex;
-
-     std::vector<reco::Vertex> SV;
-     SV.insert(SV.end(), sv.begin(), sv.end());
-     
-     VertexAssociation JVAIVF("IVF", pvs.front(), debug);
-
-     reco::VertexCollection::const_iterator vtxIter = SV.begin();
-     for(; vtxIter != SV.end(); ++vtxIter ) {
-       JVAIVF.addVertex(*vtxIter);
-     }
-     
-     const std::pair<reco::Vertex, float>    bestVertexPair  = JVAIVF.getBestVertex(muonsHandle, "oneOverR");
-     const reco::Vertex                      bestVertex      = bestVertexPair.first;
-     const float                             bestVertexScore = bestVertexPair.second;
-
-     _ntuple.fill_svInfo(bestVertex,bestVertexScore)
-
-
-       //to add to fill_svInfo
-       // double GenParticleIndex = -99.99;
-       //if(isMC)  GenParticleIndex = MatchGenVertex(iEvent,  bestVertex);
-       //VertexMatch.push_back(GenParticleIndex);
 
    //=============================================================                                                                                   
    //                                                                                                                                                
    //                Method for Muon Tree                                           
    //                                                                                                                                                
    //=============================================================                                                                                   
-   Muon_SecondGenMatch.clear();
-  // NbGoodMuons.clear();
-
-   int NbMuons = 0;
    std::string muon;
    pat::MuonCollection muons;
-   if(muonsHandle.isValid()){ muons = *muonsHandle;
-     const reco::Vertex &pv = vtxHandle->front();
+
+   vector<pat::Muon> goodMuons;
+   vector<pat::Muon> looseMuons;
+  
+   if(muonsHandle.isValid()){ 
+     muons = *muonsHandle;
      for (const pat::Muon mu : muons) {
-     if( mu.pt() < 0.0 ) continue;
-     if (!( fabs(mu.eta()) < 2.4 && mu.pt() > 5. )) continue;
-     ++NbMuons;
-       //general muons infos//
-     Muon_isGlobalMuon.push_back(mu.isGlobalMuon());
-     Muon_isPF.push_back(mu.isPFMuon());
-     Muon_isTrackerMuon.push_back(mu.isTrackerMuon());
-     Muon_isRPCMuon.push_back(mu.isRPCMuon());
-     Muon_isStandAloneMuon.push_back(mu.isStandAloneMuon());
-     Muon_isSoftMuon.push_back(mu.isSoftMuon(pv));
-     Muon_isLoose.push_back(mu.isLooseMuon());
-     Muon_isTightMuon.push_back(mu.isTightMuon(pv));
-     //Muon_isGoodMuon.push_back(mu.isGood(muon));
-     Muon_en.push_back(mu.energy());
-     Muon_et.push_back(mu.et());
-     Muon_pt.push_back(mu.pt());
-     Muon_eta.push_back(mu.eta());
-     Muon_phi.push_back(mu.phi());
-     Muon_charge.push_back(mu.charge());
-     
-       // best track and high quality//
-     reco::TrackRef tunePTrack = mu.muonBestTrack();
-     Muon_nbMuon.push_back(NbMuons);
-     Muon_ptTunePMuonBestTrack.push_back(tunePTrack->pt()); // transverse momentum                                                                
-     Muon_dPToverPTTunePMuonBestTrack.push_back(tunePTrack->ptError()/tunePTrack->pt()); // error calculation of transverse momentum              
-     Muon_pxTunePMuonBestTrack.push_back(tunePTrack->px()); //px component of the track                                                           
-     Muon_pyTunePMuonBestTrack.push_back(tunePTrack->py()); //py component of the track                                                           
-     Muon_pzTunePMuonBestTrack.push_back(tunePTrack->pz()); //pz component of the track                                                           
-     Muon_pTunePMuonBestTrack.push_back(tunePTrack->p());   //magnitude of momentum vector                                                        
-     Muon_etaTunePMuonBestTrack.push_back(tunePTrack->eta());
-     Muon_phiTunePMuonBestTrack.push_back(tunePTrack->phi());
-     Muon_thetaTunePMuonBestTrack.push_back(tunePTrack->theta());
-     Muon_chargeTunePMuonBestTrack.push_back(tunePTrack->charge());
-     Muon_absdxyTunePMuonBestTrack.push_back(fabs(tunePTrack->dxy(pv.position()))); //transvers  impact parameter  w.r.t. the primary vertex      
-     Muon_absdxyErrorTunePMuonBestTrack.push_back(fabs(tunePTrack->dxyError())); //transvers  impact parameter  w.r.t. the primary vertex         
-     Muon_absdxySigTunePMuonBestTrack.push_back(fabs(tunePTrack->dxy(pv.position()))/fabs(tunePTrack->dxyError()));
-     Muon_absdzTunePMuonBestTrack.push_back(fabs(tunePTrack->dz(pv.position()))); // longitudinal impact parameter  w.r.t. the primary vertex     
-     Muon_absdzErrorTunePMuonBestTrack.push_back(fabs(tunePTrack->dzError())); // longitudinal impact parameter  w.r.t. the primary vertex  
-     Muon_absdzSigTunePMuonBestTrack.push_back(fabs(tunePTrack->dz(pv.position()))/fabs(tunePTrack->dzError())); 
-     Muon_TrackQuality.push_back(tunePTrack->quality(reco::TrackBase::highPurity));
-
-     int GenParticleIndex1 = -99;
-     if(isMC )  GenParticleIndex1 = MatchGenFirstMuon(iEvent, tunePTrack);
-     Muon_FirstGenMatch.push_back(GenParticleIndex1);
-
-     double MatchParticleIndex = -99.99;
-     if(isMC )  MatchParticleIndex = MatchGenSecondMuon(iEvent, tunePTrack);
-     Muon_SecondGenMatch.push_back(MatchParticleIndex);
-     
-
-     if(mu.globalTrack().isNonnull() ) {
-       Muon_normalizedChi2.push_back(mu.globalTrack()->normalizedChi2());
-       Muon_numberOfValidPixelHits.push_back(mu.innerTrack()->hitPattern().numberOfValidPixelHits());
-       Muon_numberOfValidMuonHits.push_back(mu.globalTrack()->hitPattern().numberOfValidMuonHits());
-       Muon_numberOftrackerLayersWithMeasurement.push_back(mu.innerTrack()->hitPattern().trackerLayersWithMeasurement());
-       Muon_numberOfMatchedStations.push_back(mu.numberOfMatchedStations());
-       Muon_numberOfpixelLayersWithMeasurement.push_back(mu.innerTrack()->hitPattern().pixelLayersWithMeasurement());
-       Muon_InnerTrackQuality.push_back(mu.innerTrack()->quality(reco::TrackBase::highPurity));
+       if( mu.pt() < 0.0 ) continue;
+       if (!( fabs(mu.eta()) < 2.4 && mu.pt() > 5. )) continue;
+       goodMuons.push_back(mu);
+       if (!mu.isLooseMuon()) continue;
+       looseMuons.push_back(mu);
      }
-     else{
-       Muon_normalizedChi2.push_back(-999);
-       Muon_numberOfValidPixelHits.push_back(-999);
-       Muon_numberOfValidMuonHits.push_back(-999);
-       Muon_numberOftrackerLayersWithMeasurement.push_back(-999);
-       Muon_numberOfMatchedStations.push_back(-999);
-       Muon_numberOfpixelLayersWithMeasurement.push_back(-999);
-       Muon_InnerTrackQuality.push_back(-999);
-     }
-     
-     if(mu.standAloneMuon().isNonnull() ) {
-       Muon_STAnHits.push_back(mu.standAloneMuon()->numberOfValidHits());                                                                        
-       Muon_STAnLost.push_back(mu.standAloneMuon()->numberOfLostHits());                                                                         
-       Muon_STAnStationsWithAnyHits.push_back(mu.standAloneMuon()->hitPattern().muonStationsWithAnyHits());                                      
-       Muon_STAnCscChambersWithAnyHits.push_back(mu.standAloneMuon()->hitPattern().cscStationsWithAnyHits()); //csc chambers in track fit        
-       Muon_STAnDtChambersWithAnyHits.push_back(mu.standAloneMuon()->hitPattern().dtStationsWithAnyHits()); //dt chambers in track fit           
-       Muon_STAnRpcChambersWithAnyHits.push_back(mu.standAloneMuon()->hitPattern().rpcStationsWithAnyHits()); //rpc chambers in track fit        
-       Muon_STAinnermostStationWithAnyHits.push_back(mu.standAloneMuon()->hitPattern().innermostMuonStationWithAnyHits());                       
-       Muon_STAoutermostStationWithAnyHits.push_back(mu.standAloneMuon()->hitPattern().outermostMuonStationWithAnyHits());                       
-       Muon_STAnCscChambersWithValidHits.push_back(mu.standAloneMuon()->hitPattern().cscStationsWithValidHits()); //csc chambers anywhere near track
-       
-       Muon_STAnDtChambersWithValidHit.push_back(mu.standAloneMuon()->hitPattern().dtStationsWithValidHits()); //dt chambers anywhere near track 
-       Muon_STAnRpcChambersWithValidHits.push_back(mu.standAloneMuon()->hitPattern().rpcStationsWithValidHits()); //rpc chambers anywhere near track
-       Muon_STAnValidCscHits.push_back(mu.standAloneMuon()->hitPattern().numberOfValidMuonCSCHits()); //CSC hits anywhere near track             
-       Muon_STAnValidDtHits.push_back(mu.standAloneMuon()->hitPattern().numberOfValidMuonDTHits()); //DT hits anywhere near track                
-       Muon_STAnValidRpcHits.push_back(mu.standAloneMuon()->hitPattern().numberOfValidMuonRPCHits()); //RPC hits anywhere near track             
-       Muon_STAnValidMuonHits.push_back(mu.standAloneMuon()->hitPattern().numberOfValidMuonHits()); //muon hits anywhere near track              
-       Muon_STAinnermostStationWithValidHits.push_back(mu.standAloneMuon()->hitPattern().innermostMuonStationWithValidHits());                   
-       Muon_STAoutermostStationWithValidHits.push_back(mu.standAloneMuon()->hitPattern().outermostMuonStationWithValidHits());                   
-       Muon_STAnStationsWithValidHits.push_back(mu.standAloneMuon()->hitPattern().muonStationsWithValidHits());
-     }
-
-     else{
-       Muon_STAnHits.push_back(-999);
-       Muon_STAnLost.push_back(-999);
-       Muon_STAnStationsWithAnyHits.push_back(-999);
-       Muon_STAnCscChambersWithAnyHits.push_back(-999);
-       Muon_STAnDtChambersWithAnyHits.push_back(-999);
-       Muon_STAnRpcChambersWithAnyHits.push_back(-999);
-       Muon_STAinnermostStationWithAnyHits.push_back(-999);
-       Muon_STAoutermostStationWithAnyHits.push_back(-999);
-       Muon_STAnCscChambersWithValidHits.push_back(-999);
-       Muon_STAnDtChambersWithValidHit.push_back(-999);
-       Muon_STAnRpcChambersWithValidHits.push_back(-999);
-       Muon_STAnValidCscHits.push_back(-999);
-       Muon_STAnValidDtHits.push_back(-999);
-       Muon_STAnValidRpcHits.push_back(-999);
-       Muon_STAnValidMuonHits.push_back(-999);
-       Muon_STAinnermostStationWithValidHits.push_back(-999);
-       Muon_STAoutermostStationWithValidHits.push_back(-999);
-       Muon_STAnStationsWithValidHits.push_back(-999);
-     }
-     reco::MuonTime tofAll = mu.time();
-     Muon_STATofDirection.push_back(tofAll.direction());
-     Muon_STATofNDof.push_back(tofAll.nDof);
-     Muon_STATofTimeAtIpInOut.push_back(tofAll.timeAtIpInOut);
-     Muon_STATofTimeAtIpInOutErr.push_back(tofAll.timeAtIpInOutErr);
-     Muon_STATofTimeAtIpOutIn.push_back(tofAll.timeAtIpOutIn);
-     Muon_STATofTimeAtIpOutInErr.push_back(tofAll.timeAtIpOutInErr);      
-     }
-     //  NbGoodMuons.push_back(NbMuons);
-   cout<<"nb of muons"<< NbMuons<<endl;
    }
+
+   for (const pat::Muon mu : goodMuons){
+     reco::TrackRef bestTrack = mu.muonBestTrack();
+     //int matching = (isMC) ? MatchGenFirstMuon(iEvent, bestTrack) : -999;
+     //ntuple_.fill_muInfo(mu, matching);
+
+     //I'm  not sure what  MatchGenFirstMuon and MatchGenSecMuon do. It looks like we can easily to a sigle function for both
+     ntuple_.fill_muInfo(mu, pvs.at(0));
+   }
+
+   // lambda function to sort this muons
+   std::sort(goodMuons.begin(), goodMuons.end(), [](pat::Muon a, pat::Muon b) {return a.pt() < b.pt(); });
+   if(!goodMuons.size()) return;
+   if(!looseMuons.size()) return;
+   pat::Muon muonHNL = looseMuons[0];
+
+   /*
+     // to add into the fill_muInfo()
+
+   int GenParticleIndex1 = -99;
+   if(isMC )  GenParticleIndex1 = MatchGenFirstMuon(iEvent, tunePTrack);
+   Muon_FirstGenMatch.push_back(GenParticleIndex1);
+   
+   double MatchParticleIndex = -99.99;
+   if(isMC )  MatchParticleIndex = MatchGenSecondMuon(iEvent, tunePTrack);
+   Muon_SecondGenMatch.push_back(MatchParticleIndex);
+   */ 
    
    
+
+   //=============================================================                                                                                                       
+   //                                                                                                                                                                     
+   //                Secondary Vertex                                                                                                                                     
+   //                                                                                                                                                                     
+   //=============================================================                                                                                                       
+
+   if(secondaryVertexHandle.isValid()){
+
+     reco::VertexCollection bestVertices  = getMatchedVertex(muonHNL, *secondaryVertexHandle);
+
+     // check if SV doesn't match with the PV
+     for (const reco::Vertex& vtx : bestVertices){
+       float x  = vtx.x(), y = vtx.y(), z = vtx.z();
+       float dx = x - pvs.at(0).x() , dy = y - pvs.at(0).y(), dz = z - pvs.at(0).z();
+       
+       float  selIVFIsPVScore = std::sqrt((dx/x)*(dx/x) + (dy/y)*(dy/y) + (dz/z)*(dz/z));       
+       if (selIVFIsPVScore > pvCompatibilityScore) continue;
+       ntuple_.fill_svInfo(vtx, pvs.at(0));	 
+     }
+
+       ///  still to be added
+       /*  double GenParticleIndex = -99.99;
+     if(isMC)  GenParticleIndex = MatchGenVertex(iEvent,  bestVertex);
+     VertexMatch.push_back(GenParticleIndex);
+       */
+
+
+     //////////////////////////////////////////////
    
+
    EcalRecHitCollection recHitCollectionEB;
    if(recHitCollectionEBHandle.isValid()){ recHitCollectionEB = *recHitCollectionEBHandle;}
 
@@ -743,13 +556,15 @@ void HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::Ev
    //             Jets 
    //       
    //=============================================================
-
-   int jetnumber=0;
    pat::JetCollection jets;
 
-   ntuples_.ill_jetInfo(jets);
-   if(jetsHandle.isValid()){ jets = *jetsHandle;
-     ntuples_.ill_jetInfo(jets);
+   if(jetsHandle.isValid()){ 
+     jets = *jetsHandle;
+     for (const pat::Jet jet : jets) {
+       if( jet.pt() < 0.0 ) continue;
+       if (!( fabs(jet.eta()) < 3 && jet.pt() > 5. )) continue;
+       else ntuple_.fill_jetInfo(jet);
+     }
    }
    //=============================================================
    //
@@ -758,13 +573,14 @@ void HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::Ev
    //============================================================= 
    
    pat::METCollection mets;
-   if(metsHandle.isValid()){ mets = *metsHandle;
+   if(metsHandle.isValid()){ 
+     mets = *metsHandle;
      const pat::MET met = mets.front();
      ntuple_.fill_metInfo(met);
-     
    }
    
    }
+   tree_->Fill();
    
 }
    
@@ -776,11 +592,7 @@ HeavyNeutralLeptonAnalysis::beginJob()
 
 // ------------ method called once each job just after ending the event loop  ------------
 void 
-HeavyNeutralLeptonAnalysis::endJob() 
-{
-//outputFile_->cd();
-//tree_->Write();
-//outputFile_->Close(); 
+HeavyNeutralLeptonAnalysis::endJob() {
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
