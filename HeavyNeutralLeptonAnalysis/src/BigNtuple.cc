@@ -567,7 +567,7 @@ void BigNtuple::set_eleInfo(TTree* tree){
   tree->Branch("ele_SecondGenMatch", &ele_SecondGenMatch_);
 }
 
-void BigNtuple::fill_eleInfo(const pat::Electron& ele_, const reco::Vertex& pv, double Rho, double match1, double match2){
+void BigNtuple::fill_eleInfo(const pat::Electron& ele_, const reco::Vertex& pv, double Rho, double match1, double match2,  std::auto_ptr<EcalClusterLazyTools> recHitEcal){
 
 
   ele_FirstGenMatch_.push_back(match1);
@@ -616,20 +616,20 @@ void BigNtuple::fill_eleInfo(const pat::Electron& ele_, const reco::Vertex& pv, 
   
   ele_rawId_.push_back(BarrelId.rawId());
   ele_ieta_.push_back(BarrelId.ieta());
-  /*  
-  ele_e2x5Right_.push_back(recHitEcal->e2x5Right(*(ele_->superCluster()->seed())));
-  ele_e2x5Left_.push_back(recHitEcal->e2x5Left(*(ele_->superCluster()->seed())));
-  ele_e2x5Top_.push_back(recHitEcal->e2x5Top(*(ele_->superCluster()->seed())));
-  ele_e2x5Bottom_.push_back(recHitEcal->e2x5Bottom(*(ele_->superCluster()->seed())));
-  ele_eMax_.push_back(recHitEcal->eMax(*(ele_->superCluster()->seed())));
-  ele_eRight_.push_back(recHitEcal->eRight(*(ele_->superCluster()->seed())));
-  ele_eLeft_.push_back(recHitEcal->eLeft(*(ele_->superCluster()->seed())));
-  ele_eTop_.push_back(recHitEcal->eTop(*(ele_->superCluster()->seed())));
-  ele_eBottom_.push_back(recHitEcal->eBottom(*(ele_->superCluster()->seed())));
-  ele_e3x3_.push_back(recHitEcal->e3x3(*(ele_->superCluster()->seed())));
-  ele_frac51_.push_back( recHitEcal->e5x1(*(ele_->superCluster()->seed()))/ele_->full5x5_e5x5() );
-  ele_frac15_.push_back( recHitEcal->e1x5(*(ele_->superCluster()->seed()))/ele_->full5x5_e5x5() );
-  */
+
+  ele_e2x5Right_.push_back(recHitEcal->e2x5Right(*(ele_.superCluster()->seed())));
+  ele_e2x5Left_.push_back(recHitEcal->e2x5Left(*(ele_.superCluster()->seed())));
+  ele_e2x5Top_.push_back(recHitEcal->e2x5Top(*(ele_.superCluster()->seed())));
+  ele_e2x5Bottom_.push_back(recHitEcal->e2x5Bottom(*(ele_.superCluster()->seed())));
+  ele_eMax_.push_back(recHitEcal->eMax(*(ele_.superCluster()->seed())));
+  ele_eRight_.push_back(recHitEcal->eRight(*(ele_.superCluster()->seed())));
+  ele_eLeft_.push_back(recHitEcal->eLeft(*(ele_.superCluster()->seed())));
+  ele_eTop_.push_back(recHitEcal->eTop(*(ele_.superCluster()->seed())));
+  ele_eBottom_.push_back(recHitEcal->eBottom(*(ele_.superCluster()->seed())));
+  ele_e3x3_.push_back(recHitEcal->e3x3(*(ele_.superCluster()->seed())));
+  ele_frac51_.push_back( recHitEcal->e5x1(*(ele_.superCluster()->seed()))/ele_.full5x5_e5x5() );
+  ele_frac15_.push_back( recHitEcal->e1x5(*(ele_.superCluster()->seed()))/ele_.full5x5_e5x5() );
+
   ele_dxy_.push_back(ele_.gsfTrack()->dxy(pv.position()));   //GSF -> Gaussian Sum Filter
   ele_dz_.push_back(ele_.gsfTrack()->dz(pv.position())); 
 

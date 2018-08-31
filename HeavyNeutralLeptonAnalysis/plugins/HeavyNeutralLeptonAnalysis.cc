@@ -83,6 +83,14 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
+#include "Geometry/CaloGeometry/interface/CaloGeometry.h"
+#include "Geometry/Records/interface/CaloGeometryRecord.h"
+#include "Geometry/Records/interface/CaloTopologyRecord.h"
+#include "Geometry/CaloGeometry/interface/CaloSubdetectorGeometry.h"
+#include "DataFormats/EcalDetId/interface/EcalSubdetector.h"
+#include "DataFormats/EcalDetId/interface/EBDetId.h"
+#include "RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
+#include "RecoEgamma/EgammaIsolationAlgos/interface/EgammaHcalIsolation.h"
 
 #include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
@@ -530,7 +538,7 @@ void HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::Ev
      double matching_1stele = (isMC) ? MatchGenElectron(iEvent, *ele , 24 ) : -999;
      double matching_2ndele = (isMC) ? MatchGenElectron(iEvent, *ele , 9900012) : -999;
 
-     ntuple_.fill_eleInfo(*ele, pvs.at(0), rho , matching_1stele, matching_2ndele);
+     ntuple_.fill_eleInfo(*ele, pvs.at(0), rho , matching_1stele, matching_2ndele, recHitEcal);
    }
 
    pat::TauCollection taus;

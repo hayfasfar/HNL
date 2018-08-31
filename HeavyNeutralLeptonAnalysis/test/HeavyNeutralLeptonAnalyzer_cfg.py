@@ -59,7 +59,8 @@ process.HeavyNeutralLepton = cms.EDAnalyzer('HeavyNeutralLeptonAnalysis',
                                             genEventInfoProduct   = cms.InputTag("generator"),
                                             PUInfo                = cms.InputTag("slimmedAddPileupInfo"),
                                             lheEventProducts      = cms.InputTag("externalLHEProducer"),
-                                            SecondaryVertices     = cms.InputTag("displacedInclusiveSecondaryVertices")
+                                            SecondaryVertices     = cms.InputTag("displacedInclusiveSecondaryVertices"),
+                                            bDiscriminators       = cms.vstring("pfCombinedInclusiveSecondaryVertexV2BJetTags")
                                             )
 
 #process.HeavyNeutralLepton.outputFileName  = cms.untracked.string('HeavyNeutralLepton.root')
