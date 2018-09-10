@@ -147,8 +147,8 @@ private:
   int    debug;
   float pvCompatibilityScore = .05;
 
-  float npT = 0;
-  float npIT = 0;
+  float npT = -1;
+  float npIT = -1;
 
   edm::LumiReWeighting Lumiweights_;
   edm::LumiReWeighting LumiweightsUp_;
@@ -338,11 +338,11 @@ reco::VertexCollection HeavyNeutralLeptonAnalysis::getMatchedVertex_Muon(const p
   //cout << cand->pseudoTrack().pt() << " " << cand->pseudoTrack().eta() << " " << cand->pseudoTrack().phi() << endl;
 
   for(reco::VertexCollection::const_iterator ss = vertexCollection.begin(); ss != vertexCollection.end(); ++ss) {    
-    cout <<"new vertex"<<endl;
+    //cout <<"new vertex"<<endl;
     for(reco::Vertex::trackRef_iterator tt = ss->tracks_begin(); tt != ss->tracks_end(); ++tt) {
       //cout<<"Track " << (*tt)->pt() << "  "<< (*tt)->eta()<< " " << (*tt)->phi() <<endl;
       float   dpt    = fabs(cand->pseudoTrack().pt() - tt->castTo<reco::TrackRef>()->pt()) / tt->castTo<reco::TrackRef>()->pt();
-      cout << "match " << (cand->pseudoTrack().pt() == tt->castTo<reco::TrackRef>()->pt()) <<" dpt = " << dpt << endl;
+      //cout << "match " << (cand->pseudoTrack().pt() == tt->castTo<reco::TrackRef>()->pt()) <<" dpt = " << dpt << endl;
       if( (cand->pseudoTrack().pt() == tt->castTo<reco::TrackRef>()->pt()) || dpt < 0.001) { //Options here: innerTrack, globalTrack, muonBestTrack, outerTrack, pickyTrack, track
         matchedVertices.push_back(*ss);
 	break;
@@ -520,7 +520,7 @@ void HeavyNeutralLeptonAnalysis::analyze(const edm::Event& iEvent, const edm::Ev
    for(PVI = puInfoH->begin(); PVI != puInfoH->end(); ++PVI) {
      int BX = PVI->getBunchCrossing();
      if(BX == 0) {
-       npT += PVI->getTrueNumInteractions();
+       npT = PVI->getTrueNumInteractions();
        npIT = PVI->getPU_NumInteractions();
      }
    }

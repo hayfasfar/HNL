@@ -52,7 +52,7 @@ public:
 	void fill_trigInfo(const edm::TriggerResults& triggerResults, const edm::TriggerNames& trigNames);
 
 	void set_pileupInfo(TTree* tree);
-        void fill_pileupInfo( float npT, float npIT, float pu_Weight, float pu_WeightUp, float pu_WeightDown);
+        void fill_pileupInfo( float npt, float npit, float pu_weight, float pu_weightup, float pu_weightdown);
 
 	void set_svInfo(TTree* tree);
         void fill_sv_mu_Info(const reco::Vertex& bestVertex, const reco::Vertex& pv, double match);
@@ -87,11 +87,11 @@ private:
 	unsigned int run_ = 0;
 	unsigned long long evt_ = 0;
 
-	float npT_ = 0; 
-	float npIT_ = 0;
-	float pu_Weight_ = 0;
-	float pu_WeightUp_ = 0;
-	float pu_WeightDown_ = 0;
+	std::vector<float> npT_ ; 
+	std::vector<float> npIT_ ;
+	std::vector<float> pu_Weight_ ;
+	std::vector<float> pu_WeightUp_ ;
+	std::vector<float> pu_WeightDown_ ;
 	
 	// primary vertex infos  -- they shouldn't be vector 
 	float pvX_ = -1000;

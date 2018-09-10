@@ -1,5 +1,6 @@
 #include "HNL/HeavyNeutralLeptonAnalysis/interface/BigNtuple.h"
 #include "TVector3.h"
+using namespace std;
 
 void BigNtuple::set_evtInfo(TTree* tree) {
 	tree->Branch("run" , &run_, "run/i");
@@ -447,20 +448,20 @@ void BigNtuple::fill_trigInfo(const edm::TriggerResults& triggerResults, const e
 
 void BigNtuple::set_pileupInfo(TTree* tree){
 
-  tree->Branch("npT" , &npT_, "npT/O");
-  tree->Branch("npIT" , &npIT_, "npIT/O");
-  tree->Branch("PU_Weight" , &pu_Weight_, "PU_Weight/O");
-  tree->Branch("PU_WeightUp" , &pu_WeightUp_, "PU_WeightUp/O");
-  tree->Branch("PU_WeightDown" , &pu_WeightDown_, "PU_WeightDown/O");  
+  tree->Branch("npT" , &npT_);
+  tree->Branch("npIT" , &npIT_);
+  tree->Branch("PU_Weight" , &pu_Weight_);
+  tree->Branch("PU_WeightUp" , &pu_WeightUp_);
+  tree->Branch("PU_WeightDown" , &pu_WeightDown_);  
 }
 
-void BigNtuple::fill_pileupInfo( float npT, float npIT, float PU_Weight, float PU_WeightUp, float PU_WeightDown){
+void BigNtuple::fill_pileupInfo( float npt, float npit, float pu_weight, float pu_weightup, float pu_weightdown){
 
- npT_ = npT;
- npIT_ = npIT;
- pu_Weight_ = PU_Weight;
- pu_WeightUp_ = PU_WeightUp;
- pu_WeightDown_ = PU_WeightDown;
+  npT_.push_back(npt);
+  npIT_.push_back(npit);
+  pu_Weight_.push_back(pu_weight);
+  pu_WeightUp_.push_back(pu_weightup);
+  pu_WeightDown_.push_back(pu_weightdown);
 
 }
 
