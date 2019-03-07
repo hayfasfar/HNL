@@ -22,7 +22,7 @@ tree->Branch("gen_partPt",&gen_partPt_);
 tree->Branch("gen_partPz", &gen_partPz_);
 tree->Branch("gen_partEta", &gen_partEta_);
 tree->Branch("gen_partPhi", &gen_partPhi_);
-tree->Branch("gen_partVx" , & gen_partVx_) ; 
+tree->Branch("gen_partVx" , &gen_partVx_) ; 
 tree->Branch("gen_partVy", &gen_partVy_);
 tree->Branch("gen_partVz", &gen_partVz_);
 tree->Branch("gen_partDz", &gen_partDz_) ;
@@ -31,7 +31,7 @@ tree->Branch("gen_partdxyz0",  &gen_partdxyz0_) ;
 tree->Branch("gen_partDxyPv", &gen_partDxy_);
 tree->Branch("gen_partDxyzPv", &gen_partDxyz_);
 tree->Branch("gen_partVertex", &gen_partVertex_) ; 
-tree->Branch("genMuMult", & genMuMult_) ;
+tree->Branch("genMuMult", &genMuMult_) ;
 tree->Branch("gen_partMu2dR", &gen_partMu2dR_);
 tree->Branch("gen_partMu1dR", &gen_partMu1dR_);
 tree->Branch("gen_dRMu1Mu2", &dr_Mu1Mu2Gen_);
@@ -42,27 +42,34 @@ tree->Branch("reco_nbOfTracks", &reco_nbOfTracks_);
 tree->Branch("reco_TrackPt",  &reco_TrackPt_) ;
 tree->Branch("deltaRMatchedTr", &deltaRMatchedTr_);
 tree->Branch("reco_TrackEta",  &reco_TrackEta_);
+tree->Branch("reco_TrackPhi",  &reco_TrackPhi_);
 tree->Branch("reco_TrackVx", &reco_TrackVx_); 
 tree->Branch("reco_TrackVy", &reco_TrackVy_);
 tree->Branch("reco_TrackVz", &reco_TrackVz_);
 tree->Branch("reco_TrackDxyPV", &reco_TrackDxy_);
+tree->Branch("reco_TrackDzPv",&reco_TrackDzPv_);
+tree->Branch("reco_TrackNbofhits",&reco_TrackNbofhits_);
+tree->Branch("reco_TrackNbofPixelhits" , &reco_TrackNbofPixelhits_) ;
 tree->Branch("reco_TrackDz", &reco_TrackDz_) ;
 tree->Branch("reco_TrackHighPurity", &reco_TrackHighPurity_);
-tree->Branch("dR_trackGen" , & dR_trackGen_ ) ;
+tree->Branch("dR_trackGen" , &dR_trackGen_ ) ;
 tree->Branch("losttracks", &losttrack_);
 tree->Branch("recoMuMult_", &recoMuMult_);
 tree->Branch("reco_mu1Pt", &reco_mu1Pt_);
 tree->Branch("reco_mu1Eta", &reco_mu1Eta_);
 tree->Branch("reco_mu1dxy0", &reco_mu1dxy0_);
 tree->Branch("reco_mu1Dxy", &reco_mu1Dxy_) ;
-tree->Branch("reco_mu1vertex", & reco_mu1vertex_); 
+tree->Branch("reco_mu1vertex", &reco_mu1vertex_); 
 tree->Branch("reco_mu2Pt", &reco_mu2Pt_);
 tree->Branch("reco_mu2Eta", &reco_mu2Eta_);
+tree->Branch("reco_mu2_vx", &reco_mu2_vx_);
+tree->Branch("reco_mu2_vy",&reco_mu2_vy_);
+tree->Branch("reco_mu2_vz", &reco_mu2_vz_);
 tree->Branch("reco_mu2dxy0", &reco_mu2dxy0_);
 tree->Branch("reco_mu2Dxy", &reco_mu2Dxy_) ;
-tree->Branch("reco_mu2vertex", & reco_mu2vertex_); 
+tree->Branch("reco_mu2vertex", &reco_mu2vertex_); 
 tree->Branch("itMatchesMu2", &itMatchesMu2_);
-tree->Branch("itMatchesTrack", & itMatchesTrack_);
+tree->Branch("itMatchesTrack", &itMatchesTrack_);
 tree->Branch("gen_pv_position", &gen_pv_position_);
 
 
@@ -70,7 +77,9 @@ tree->Branch("gen_pv_position", &gen_pv_position_);
 
 void BigNtuple::muonMCmatching(  edm::Handle<pat::PackedGenParticleCollection> genPackedHandle , edm::Handle<pat::MuonCollection> muonsHandle, float indexMu1 , float indexMu2 , math::XYZPoint gen_PvPosition  ){
 nbRecoMu = muonsHandle->size() ;
+
 for (size_t m = 0 ; m < muonsHandle->size() ; m ++ ){
+
      if((*muonsHandle)[m].bestTrack() != nullptr && fabs((*genPackedHandle)[indexMu1].eta()) < 2.4 && fabs((*genPackedHandle)[indexMu2].eta()) <2.4 ) {
         if((*genPackedHandle)[indexMu1].charge() == (*muonsHandle)[m].bestTrack()->charge() ){
         mu1_Matching = deltaR( (*genPackedHandle)[indexMu1].eta(),(*genPackedHandle)[indexMu1].phi(), (*muonsHandle)[m].bestTrack()->eta(), (*muonsHandle)[m].bestTrack()->phi());
@@ -80,10 +89,10 @@ for (size_t m = 0 ; m < muonsHandle->size() ; m ++ ){
             indexRecoMu1 = m ;
             drminMu1 = mu1_Matching ;
        	}
-       } 
+     } 
         if((*genPackedHandle)[indexMu1].charge() == (*muonsHandle)[m].bestTrack()->charge() ){
         mu2_Matching = deltaR( (*genPackedHandle)[indexMu2].eta(),(*genPackedHandle)[indexMu2].phi(), (*muonsHandle)[m].bestTrack()->eta(), (*muonsHandle)[m].bestTrack()->phi());
-       if(mu2_Matching < 0.1 && mu2_Matching < drminMu2 ){
+        if(mu2_Matching < 0.1 && mu2_Matching < drminMu2 ){
             indexRecoMu2 = m ;
             drminMu2 = mu2_Matching ; 
        	}
@@ -94,6 +103,7 @@ for (size_t m = 0 ; m < muonsHandle->size() ; m ++ ){
 }
 
 recoMuMult_.push_back(nbRecoMu);
+
 if(indexRecoMu1 != -10 ){
 
 reco_mu1Pt_.push_back( (*muonsHandle)[indexRecoMu1].bestTrack()->pt() ) ;
@@ -118,7 +128,10 @@ reco_mu2Dxy_.push_back((*muonsHandle)[indexRecoMu2].bestTrack()->dxy(gen_PvPosit
 
 float mu2_x = (*muonsHandle)[indexRecoMu2].bestTrack()->vx()  ; 
 float mu2_y = (*muonsHandle)[indexRecoMu2].bestTrack()->vy() ;
-float mu2_z = (*muonsHandle)[indexRecoMu2].bestTrack()->vz() ; 
+float mu2_z = (*muonsHandle)[indexRecoMu2].bestTrack()->vz() ;
+reco_mu2_vx_.push_back(mu2_x) ;
+reco_mu2_vy_.push_back(mu2_y) ;
+reco_mu2_vz_.push_back(mu2_z) ;   
 reco_mu2dxy0_.push_back(sqrt(mu2_x*mu2_x + mu2_y*mu2_y )) ; 
 reco_mu2vertex_.push_back(sqrt(mu2_x*mu2_x + mu2_y*mu2_y + mu2_z*mu2_z)) ; 
 
@@ -128,9 +141,8 @@ reco_mu2vertex_.push_back(sqrt(mu2_x*mu2_x + mu2_y*mu2_y + mu2_z*mu2_z)) ;
 
 void  BigNtuple::fill_sv_genInfo(edm::Handle<reco::GenParticleCollection>  genHandle , edm::Handle<pat::PackedGenParticleCollection>  genPackedHandle , edm::Handle<pat::PackedCandidateCollection> pfCandidatesHandle , edm::Handle<pat::PackedCandidateCollection> lostTracks , float * indexMu1 , float* indexMu2 , math::XYZPoint * gen_PvPosition ){
 std::vector<float> matched ;
-//std::vector<bool> losttrack_ ; 
 
-cout<<"first point " <<endl ;
+ cout<<"first point " <<endl ;
  for (size_t j = 0 ; j <  genPackedHandle->size() ; j++ ){
    if(fabs((*genPackedHandle)[j].pdgId()) == 13 && (*genPackedHandle)[j].mother(0) != nullptr)
    {
@@ -177,7 +189,6 @@ cout<<"first point " <<endl ;
   }
  }
     genMuMult_.push_back(nbGenMu);
-  //  cout<<" point 1 "<<endl ; 
 
    // Looking for the Gen final state particles from Signal hadronisation and match them to reco tracks.
   float prt_x =0., prt_y=0. , prt_z =0. ; 
@@ -205,7 +216,7 @@ cout<<"first point " <<endl ;
                          gen_partPz_.push_back((*genPackedHandle)[j].pz()) ;
                          gen_partEta_.push_back((*genPackedHandle)[j].eta());
 			 gen_partPhi_.push_back((*genPackedHandle)[j].phi());
-			 gen_partDz_.push_back((*genPackedHandle)[j].dz());
+			 gen_partDz_.push_back((*genPackedHandle)[j].dz(*gen_PvPosition));
                          prt_x = (*genHandle)[i].vx() ;
                          prt_y = (*genHandle)[i].vy() ;
                          prt_z = (*genHandle)[i].vz() ;
@@ -219,7 +230,6 @@ cout<<"first point " <<endl ;
                          deltaDxyz = sqrt(pow(prt_x - gen_pv_x,2) + pow(prt_y - gen_pv_y,2) + pow(prt_z - gen_pv_z,2));
  			 gen_partDxy_.push_back(deltaDxy);
  			 gen_partDxyz_.push_back(deltaDxyz);
-			// cout<<"point 4 "<<endl;
                        
                          float gendRmu1part = deltaR((*genPackedHandle)[j].eta(), (*genPackedHandle)[j].phi(), (*genPackedHandle)[*indexMu1].eta(), (*genPackedHandle)[*indexMu1].phi());
                          float gendRmu2part = deltaR((*genPackedHandle)[j].eta(), (*genPackedHandle)[j].phi(), (*genPackedHandle)[*indexMu2].eta(), (*genPackedHandle)[*indexMu2].phi()); 
@@ -235,12 +245,12 @@ cout<<"first point " <<endl ;
  
  			    for (size_t k = 0 ; k < pfCandidatesHandle->size() ; k++ )
                             {
+		//this to avoid double counting.
  				      for(size_t m = 0 ; m < matched.size() ; m ++ ) { 
                                          if(matched.size() == 0)  continue ; 
 					 if(matched[m] == k && losttrack_[m] == 0 ) continue ; 
                                       }
-			//	cout<<"point 5 :  "<<endl ;
-
+				//if there is best track  i take it, if not i just access directly  eta and phi of the pf Candidates. 
                                    if((*pfCandidatesHandle)[k].bestTrack() == nullptr){ //cout << "yes it is nullptr"<<endl;
 
                                        float track_Matching = deltaR((*pfCandidatesHandle)[k].eta(),(*pfCandidatesHandle)[k].phi(),(*genPackedHandle)[j].eta(),(*genPackedHandle)[j].phi());
@@ -256,7 +266,6 @@ cout<<"first point " <<endl ;
                                                 resolutionTrack_.push_back(fabs((*pfCandidatesHandle)[k].dxy(*gen_PvPosition)) - deltaDxy) ;
  						 
                                        }
- 			//		cout<< "point 6 : "<<endl ;    
                                    }
                    
                                    if((*pfCandidatesHandle)[k].bestTrack()!= nullptr ){
@@ -270,15 +279,15 @@ cout<<"first point " <<endl ;
 						losttrack = 0 ;	
 						resolution = fabs((*pfCandidatesHandle)[k].bestTrack()->dxy(*gen_PvPosition)) - deltaDxy ; 
                                                 resolutionTrack_.push_back(fabs((*pfCandidatesHandle)[k].bestTrack()->dxy(*gen_PvPosition)) - deltaDxy) ;
-                                       }
+                                      }
  			//		cout<<"point 7" <<endl ;     
                                  }    
                           }
-			 if(drmintrack > 0.02){
+			if(drmintrack > 0.02){
 		       	cout<<"it enter the lost loop "<<endl ;
 
                           for(size_t l = 0 ; l < lostTracks->size() ; l++){
-
+		//this to avoid double counting.
                            for(size_t m = 0 ; m < matched.size() ; m ++ ) {
                                          if(matched.size() == 0)  continue ;
   					 if(matched[m] == l &&  losttrack_[m] == 1 ) continue ; 
@@ -315,11 +324,13 @@ cout<<"first point " <<endl ;
                               //Do the  same but with  == nullptr  !!!! 
 			   }
 			 }
+
 //   cout<< "losttrack "<< losttrack << "resolution "<< resolution <<"ndexRecoTrack "<<indexRecoTrack << endl ; 
 //   cout<<"next gen particle : "<<endl ;
 // here you add things about the reconstructed tracks from pfCandidates. 
-   if(indexRecoTrack == -10) itMatchesTrack_.push_back(false);
-    if(indexRecoTrack != -10 && (*pfCandidatesHandle)[indexRecoTrack].bestTrack() ==nullptr && losttrack == 0 ){
+
+     if(indexRecoTrack == -10) itMatchesTrack_.push_back(false);
+     if(indexRecoTrack != -10 && (*pfCandidatesHandle)[indexRecoTrack].bestTrack() ==nullptr && losttrack == 0 ){
      itMatchesTrack_.push_back(true);
      matched.push_back(indexRecoTrack);
      reso_Matched_.push_back(resolution) ; 
@@ -327,14 +338,18 @@ cout<<"first point " <<endl ;
      losttrack_.push_back(losttrack); 
      reco_TrackHighPurity_.push_back((*pfCandidatesHandle)[indexRecoTrack].trackHighPurity() ) ; 
      reco_TrackEta_.push_back((*pfCandidatesHandle)[indexRecoTrack].eta());
+     reco_TrackPhi_.push_back((*pfCandidatesHandle)[indexRecoTrack].phi());
      reco_TrackPt_.push_back((*pfCandidatesHandle)[indexRecoTrack].pt());
      reco_TrackVx_.push_back((*pfCandidatesHandle)[indexRecoTrack].vx());
      reco_TrackVy_.push_back((*pfCandidatesHandle)[indexRecoTrack].vy());
      reco_TrackVz_.push_back((*pfCandidatesHandle)[indexRecoTrack].vz());
      reco_TrackDxy_.push_back((*pfCandidatesHandle)[indexRecoTrack].dxy(*gen_PvPosition));
      reco_TrackDxy0_.push_back((*pfCandidatesHandle)[indexRecoTrack].dxy());
+     reco_TrackNbofhits_.push_back((*pfCandidatesHandle)[indexRecoTrack].numberOfHits());
+     reco_TrackNbofPixelhits_.push_back((*pfCandidatesHandle)[indexRecoTrack].numberOfPixelHits () ) ; 
   
      reco_TrackDz_.push_back((*pfCandidatesHandle)[indexRecoTrack].dz());
+     reco_TrackDzPv_.push_back((*pfCandidatesHandle)[indexRecoTrack].dz(*gen_PvPosition));
      
      resolutionTrack_.push_back(fabs((*pfCandidatesHandle)[indexRecoTrack].dxy(*gen_PvPosition) - deltaDxy ));
      nbOftracks += 1 ;
@@ -348,6 +363,7 @@ cout<<"first point " <<endl ;
      itMatchesTrack_.push_back(true);
      reco_TrackHighPurity_.push_back((*pfCandidatesHandle)[indexRecoTrack].trackHighPurity() ) ; 
      reco_TrackEta_.push_back((*pfCandidatesHandle)[indexRecoTrack].bestTrack()->eta());
+     reco_TrackPhi_.push_back((*pfCandidatesHandle)[indexRecoTrack].bestTrack()->phi());
      reco_TrackPt_.push_back((*pfCandidatesHandle)[indexRecoTrack].bestTrack()->pt());
      reco_TrackVx_.push_back((*pfCandidatesHandle)[indexRecoTrack].bestTrack()->vx());
      reco_TrackVy_.push_back((*pfCandidatesHandle)[indexRecoTrack].bestTrack()->vy());
@@ -355,6 +371,9 @@ cout<<"first point " <<endl ;
      reco_TrackDxy_.push_back((*pfCandidatesHandle)[indexRecoTrack].bestTrack()->dxy(*gen_PvPosition));
      reco_TrackDxy0_.push_back((*pfCandidatesHandle)[indexRecoTrack].bestTrack()->dxy());
      reco_TrackDz_.push_back((*pfCandidatesHandle)[indexRecoTrack].bestTrack()->dz());
+     reco_TrackDzPv_.push_back((*pfCandidatesHandle)[indexRecoTrack].dz(*gen_PvPosition));
+     reco_TrackNbofhits_.push_back((*pfCandidatesHandle)[indexRecoTrack].numberOfHits());
+     reco_TrackNbofPixelhits_.push_back((*pfCandidatesHandle)[indexRecoTrack].numberOfPixelHits () ) ; 
      nbOftracks += 1 ; 
     }              
 
@@ -371,13 +390,18 @@ cout<<"first point " <<endl ;
      reco_TrackHighPurity_.push_back((*lostTracks)[indexRecoTrack].trackHighPurity() ) ; 
 
      reco_TrackEta_.push_back((*lostTracks)[indexRecoTrack].eta());
+     reco_TrackPhi_.push_back((*lostTracks)[indexRecoTrack].phi());
      reco_TrackPt_.push_back((*lostTracks)[indexRecoTrack].pt());
      reco_TrackVx_.push_back((*lostTracks)[indexRecoTrack].vx());
      reco_TrackVy_.push_back((*lostTracks)[indexRecoTrack].vy());
      reco_TrackVz_.push_back((*lostTracks)[indexRecoTrack].vz());
      reco_TrackDxy_.push_back((*lostTracks)[indexRecoTrack].dxy(*gen_PvPosition));
      reco_TrackDxy0_.push_back((*lostTracks)[indexRecoTrack].dxy());
+     reco_TrackNbofhits_.push_back((*lostTracks)[indexRecoTrack].numberOfHits());
+     cout<<"number of pixel hits for lost tracks"<<(*lostTracks)[indexRecoTrack].numberOfPixelHits () <<endl;
+     reco_TrackNbofPixelhits_.push_back((*pfCandidatesHandle)[indexRecoTrack].numberOfPixelHits () ) ; 
      reco_TrackDz_.push_back((*lostTracks)[indexRecoTrack].dz());
+     reco_TrackDzPv_.push_back((*lostTracks)[indexRecoTrack].dz(*gen_PvPosition));
      
     // resolutionTrack_.push_back(fabs((*lostTracks)[indexRecoTrack].dxy(*gen_PvPosition) - deltaDxy ));
      nbOftracks += 1 ;
@@ -392,13 +416,18 @@ cout<<"first point " <<endl ;
      reso_Matched_.push_back(resolution) ; 
      itMatchesTrack_.push_back(true);
      reco_TrackEta_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->eta());
+     reco_TrackPhi_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->phi());
      reco_TrackPt_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->pt());
      reco_TrackVx_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->vx());
      reco_TrackVy_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->vy());
      reco_TrackVz_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->vz());
      reco_TrackDxy_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->dxy(*gen_PvPosition));
      reco_TrackDxy0_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->dxy());
+     reco_TrackNbofhits_.push_back((*lostTracks)[indexRecoTrack].numberOfHits());
+     cout<<"number of pixel hits for lost tracks"<<(*lostTracks)[indexRecoTrack].numberOfPixelHits () <<endl;
+     reco_TrackNbofPixelhits_.push_back((*lostTracks)[indexRecoTrack].numberOfPixelHits () ) ; 
      reco_TrackDz_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->dz());
+     reco_TrackDzPv_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->dz(*gen_PvPosition));
      nbOftracks += 1 ; 
     } 
 
