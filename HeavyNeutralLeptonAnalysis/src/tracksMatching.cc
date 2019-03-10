@@ -71,6 +71,9 @@ tree->Branch("reco_mu2vertex", &reco_mu2vertex_);
 tree->Branch("itMatchesMu2", &itMatchesMu2_);
 tree->Branch("itMatchesTrack", &itMatchesTrack_);
 tree->Branch("gen_pv_position", &gen_pv_position_);
+tree->Branch("gen_pv_x", &gen_pv_x_);
+tree->Branch("gen_pv_y", &gen_pv_x_);
+tree->Branch("gen_pv_z", &gen_pv_x_);
 
 
 }
@@ -144,9 +147,10 @@ std::vector<float> matched ;
 
  cout<<"first point " <<endl ;
  for (size_t j = 0 ; j <  genPackedHandle->size() ; j++ ){
+   if(fabs((*genPackedHandle)[j].pdgId()) == 13 ) nbGenMu +=1 ;  
    if(fabs((*genPackedHandle)[j].pdgId()) == 13 && (*genPackedHandle)[j].mother(0) != nullptr)
    {
-     nbGenMu +=1 ;
+    // nbGenMu +=1 ;
      bool  motherFound = false ; 
      const reco::Candidate * mother  = (*genPackedHandle)[j].mother(0) ;
      while(motherFound == false) {
@@ -193,23 +197,33 @@ std::vector<float> matched ;
    // Looking for the Gen final state particles from Signal hadronisation and match them to reco tracks.
   float prt_x =0., prt_y=0. , prt_z =0. ; 
   float deltaDxy = 0. , deltaDxyz = 0. ;
-  if(*indexMu2 != -10 && *indexMu1 != -10) {
- 
-   for (size_t j = 0 ; j < genPackedHandle->size() ; j++ ){
-      if(fabs((*genPackedHandle)[j].pdgId() ) > 100 ) {
 
-      for (size_t i = 0 ; i< genHandle->size(); i++){
+  if(*indexMu2 != -10 && *indexMu1 != -10) { // index mu1 and index mu2 should be always different than -10, but this is only for safety.
+
+
+   for (size_t j = 0 ; j < genPackedHandle->size() ; j++ ){
+
+
+      if(j == *indexMu2 || j == *indexMu1)  continue ;       
+
+     if(fabs((*genPackedHandle)[j].pdgId() ) > 100 ) {
+ //      if((*genPackedHandle)[j].charge()!= 0){
+
+     for (size_t i = 0 ; i< genHandle->size(); i++){
+
         if(fabs((*genHandle)[i].pdgId()) == 24 && (*genHandle)[i].isLastCopy() && ! pvFound){
                   *gen_PvPosition =  (*genHandle)[i].vertex() ;
 		   gen_pv_x = (*genHandle)[i].vx() ; gen_pv_y = (*genHandle)[i].vy() ; gen_pv_z = (*genHandle)[i].vz() ;
-                   pvFound = true ;      
+                   pvFound = true ;     
+                   gen_pv_x_.push_back(gen_pv_x);  
+                   gen_pv_y_.push_back(gen_pv_y);  
+                   gen_pv_z_.push_back(gen_pv_z);  
         }
-
-        if((*genHandle)[i].mother(0) != nullptr && (*genHandle)[i].mother(0)->pdgId() == 9900012 && fabs((*genHandle)[i].pdgId()) < 5){
+        if((*genHandle)[i].mother(0) != nullptr && (*genHandle)[i].mother(0)->pdgId() == 9900012 && fabs((*genHandle)[i].status() ) == 23 && fabs((*genHandle)[i].pdgId()) < 5){
           const reco::Candidate * HNL =  (*genHandle)[i].mother(0) ; 
           const reco::Candidate * motherInPrunedCollection = (*genPackedHandle)[j].mother(0);
           if(motherInPrunedCollection != nullptr && isAncestor( HNL , motherInPrunedCollection)) {
-                       if((*genPackedHandle)[j].charge() != 0 && j != fabs(*indexMu1) && j != fabs(*indexMu2) ){
+                      if((*genPackedHandle)[j].charge() != 0 ){
                          chParticles += 1;
                          gen_partId23_.push_back((*genPackedHandle)[j].pdgId());
 			 gen_partPt_.push_back((*genPackedHandle)[j].pt());
@@ -223,7 +237,6 @@ std::vector<float> matched ;
 			 gen_partVx_.push_back(prt_x) ;  
 			 gen_partVy_.push_back(prt_y) ;  
 			 gen_partVz_.push_back(prt_z) ;
-                        // cout<<"dxy gen particle x : "<< (*genHandle)[i].vx()<< " y position : "<< (*genHandle)[i].vy() <<endl ; 
  			 gen_partdxy0_.push_back(sqrt(prt_x*prt_x + prt_y*prt_y)); 
  			 gen_partdxyz0_.push_back(sqrt(prt_x*prt_x + prt_y*prt_y + prt_z*prt_z));
                          deltaDxy = sqrt(pow(prt_x - gen_pv_x,2) + pow(prt_y - gen_pv_y,2) ) ;
@@ -250,7 +263,8 @@ std::vector<float> matched ;
                                          if(matched.size() == 0)  continue ; 
 					 if(matched[m] == k && losttrack_[m] == 0 ) continue ; 
                                       }
-				//if there is best track  i take it, if not i just access directly  eta and phi of the pf Candidates. 
+				//if there is best track  i take it, if not i just access directly  eta and phi of the pf Candidates.
+				//
                                    if((*pfCandidatesHandle)[k].bestTrack() == nullptr){ //cout << "yes it is nullptr"<<endl;
 
                                        float track_Matching = deltaR((*pfCandidatesHandle)[k].eta(),(*pfCandidatesHandle)[k].phi(),(*genPackedHandle)[j].eta(),(*genPackedHandle)[j].phi());
@@ -262,8 +276,6 @@ std::vector<float> matched ;
  			                	indexRecoTrack = k ;
   		 				dR_trackGen_.push_back(drmintrack ) ;
 						losttrack = 0 ;
-						resolution = fabs((*pfCandidatesHandle)[k].dxy(*gen_PvPosition)) - deltaDxy ; 			
-                                                resolutionTrack_.push_back(fabs((*pfCandidatesHandle)[k].dxy(*gen_PvPosition)) - deltaDxy) ;
  						 
                                        }
                                    }
@@ -277,8 +289,6 @@ std::vector<float> matched ;
  			                	indexRecoTrack = k ;
      						dR_trackGen_.push_back(drmintrack ) ; 
 						losttrack = 0 ;	
-						resolution = fabs((*pfCandidatesHandle)[k].bestTrack()->dxy(*gen_PvPosition)) - deltaDxy ; 
-                                                resolutionTrack_.push_back(fabs((*pfCandidatesHandle)[k].bestTrack()->dxy(*gen_PvPosition)) - deltaDxy) ;
                                       }
  			//		cout<<"point 7" <<endl ;     
                                  }    
@@ -298,12 +308,10 @@ std::vector<float> matched ;
 					  if(track_Matching < drmintrack &&  track_Matching < 0.15 && (*lostTracks)[l].charge() == (*genPackedHandle)[j].charge()){
 
                                                 drmintrack = track_Matching ;
-                                              //  cout<< "dr min is "<<drmintrack <<endl ;
+
                                                 indexRecoTrack = l ;
                                                 dR_trackGen_.push_back(drmintrack ) ;
                                                 losttrack = 1 ;
-						resolution = fabs((*lostTracks)[l].dxy(*gen_PvPosition)) - deltaDxy ;
-                                                resolutionTrack_.push_back(fabs((*lostTracks)[l].bestTrack()->dxy(*gen_PvPosition) - deltaDxy)) ;
                                 }
 
 			        }
@@ -315,8 +323,6 @@ std::vector<float> matched ;
 					indexRecoTrack = l ;
 					dR_trackGen_.push_back(drmintrack ) ;
 					losttrack = 1 ;
-                                        resolutionTrack_.push_back(fabs((*lostTracks)[l].dxy(*gen_PvPosition) - deltaDxy)) ;
-  					resolution = fabs((*lostTracks)[l].dxy(*gen_PvPosition)) - deltaDxy ;
 				 }
    			          	
 				}
@@ -330,10 +336,10 @@ std::vector<float> matched ;
 // here you add things about the reconstructed tracks from pfCandidates. 
 
      if(indexRecoTrack == -10) itMatchesTrack_.push_back(false);
-     if(indexRecoTrack != -10 && (*pfCandidatesHandle)[indexRecoTrack].bestTrack() ==nullptr && losttrack == 0 ){
+     if(losttrack == 0 ){
+     if(indexRecoTrack != -10 && (*pfCandidatesHandle)[indexRecoTrack].bestTrack() ==nullptr ){
      itMatchesTrack_.push_back(true);
      matched.push_back(indexRecoTrack);
-     reso_Matched_.push_back(resolution) ; 
      deltaRMatchedTr_.push_back(drmintrack); 
      losttrack_.push_back(losttrack); 
      reco_TrackHighPurity_.push_back((*pfCandidatesHandle)[indexRecoTrack].trackHighPurity() ) ; 
@@ -351,15 +357,12 @@ std::vector<float> matched ;
      reco_TrackDz_.push_back((*pfCandidatesHandle)[indexRecoTrack].dz());
      reco_TrackDzPv_.push_back((*pfCandidatesHandle)[indexRecoTrack].dz(*gen_PvPosition));
      
-     resolutionTrack_.push_back(fabs((*pfCandidatesHandle)[indexRecoTrack].dxy(*gen_PvPosition) - deltaDxy ));
      nbOftracks += 1 ;
     }   
-    if(indexRecoTrack != -10 && (*pfCandidatesHandle)[indexRecoTrack].bestTrack() !=nullptr && losttrack == 0){
+    if(indexRecoTrack != -10 && (*pfCandidatesHandle)[indexRecoTrack].bestTrack() !=nullptr){
      matched.push_back(indexRecoTrack);
      losttrack_.push_back(losttrack); 
-    // resolutionTrack_.push_back(fabs((*pfCandidatesHandle)[indexRecoTrack].bestTrack()->dxy(*gen_PvPosition) - deltaDxy ));
      deltaRMatchedTr_.push_back(drmintrack); 
-     reso_Matched_.push_back(resolution) ; 
      itMatchesTrack_.push_back(true);
      reco_TrackHighPurity_.push_back((*pfCandidatesHandle)[indexRecoTrack].trackHighPurity() ) ; 
      reco_TrackEta_.push_back((*pfCandidatesHandle)[indexRecoTrack].bestTrack()->eta());
@@ -376,7 +379,7 @@ std::vector<float> matched ;
      reco_TrackNbofPixelhits_.push_back((*pfCandidatesHandle)[indexRecoTrack].numberOfPixelHits () ) ; 
      nbOftracks += 1 ; 
     }              
-
+    }
    if(losttrack == 1 )	{
    if(indexRecoTrack != -10 && (*lostTracks)[indexRecoTrack].bestTrack() ==nullptr){
      itMatchesTrack_.push_back(true);
@@ -384,7 +387,6 @@ std::vector<float> matched ;
      matched.push_back(indexRecoTrack);
      deltaRMatchedTr_.push_back(drmintrack); 
     
-     reso_Matched_.push_back(resolution) ; 
 
      losttrack_.push_back(losttrack); 
      reco_TrackHighPurity_.push_back((*lostTracks)[indexRecoTrack].trackHighPurity() ) ; 
@@ -398,22 +400,17 @@ std::vector<float> matched ;
      reco_TrackDxy_.push_back((*lostTracks)[indexRecoTrack].dxy(*gen_PvPosition));
      reco_TrackDxy0_.push_back((*lostTracks)[indexRecoTrack].dxy());
      reco_TrackNbofhits_.push_back((*lostTracks)[indexRecoTrack].numberOfHits());
-     cout<<"number of pixel hits for lost tracks"<<(*lostTracks)[indexRecoTrack].numberOfPixelHits () <<endl;
      reco_TrackNbofPixelhits_.push_back((*pfCandidatesHandle)[indexRecoTrack].numberOfPixelHits () ) ; 
      reco_TrackDz_.push_back((*lostTracks)[indexRecoTrack].dz());
      reco_TrackDzPv_.push_back((*lostTracks)[indexRecoTrack].dz(*gen_PvPosition));
      
-    // resolutionTrack_.push_back(fabs((*lostTracks)[indexRecoTrack].dxy(*gen_PvPosition) - deltaDxy ));
      nbOftracks += 1 ;
     }   
     if(indexRecoTrack != -10 && (*lostTracks)[indexRecoTrack].bestTrack() !=nullptr ){
-     cout<< " best track different than nullptr "<<endl ;
      matched.push_back(indexRecoTrack);
      losttrack_.push_back(losttrack); 
-   //  resolutionTrack_.push_back(fabs((*lostTracks)[indexRecoTrack].bestTrack()->dxy(*gen_PvPosition) - deltaDxy ));
      reco_TrackHighPurity_.push_back((*lostTracks)[indexRecoTrack].trackHighPurity() ) ; 
      deltaRMatchedTr_.push_back(drmintrack); 
-     reso_Matched_.push_back(resolution) ; 
      itMatchesTrack_.push_back(true);
      reco_TrackEta_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->eta());
      reco_TrackPhi_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->phi());
@@ -424,7 +421,6 @@ std::vector<float> matched ;
      reco_TrackDxy_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->dxy(*gen_PvPosition));
      reco_TrackDxy0_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->dxy());
      reco_TrackNbofhits_.push_back((*lostTracks)[indexRecoTrack].numberOfHits());
-     cout<<"number of pixel hits for lost tracks"<<(*lostTracks)[indexRecoTrack].numberOfPixelHits () <<endl;
      reco_TrackNbofPixelhits_.push_back((*lostTracks)[indexRecoTrack].numberOfPixelHits () ) ; 
      reco_TrackDz_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->dz());
      reco_TrackDzPv_.push_back((*lostTracks)[indexRecoTrack].bestTrack()->dz(*gen_PvPosition));
@@ -437,12 +433,13 @@ std::vector<float> matched ;
         }
 break;
      } 
-}
+   }
   }
  }
 //Here you put push_back  reco_Mu1/2 variables and signal tracks variables. 
-if(indexMu2 != 0)
+if(*indexMu2 != -10 && *indexMu2 != -10)
 chargedPrtMult_.push_back(chParticles);                  
+
 
 //if(nbOftracks!=0)
 reco_nbOfTracks_.push_back(nbOftracks);
